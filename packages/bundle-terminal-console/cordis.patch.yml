@@ -1,0 +1,8 @@
+# The dsh-terminal-console bundle patch: makes the original UI terminal-like.
+# The session strip shadows the original sidebar occupant (the layout renders
+# the sidebar slot as a horizontal top strip) and keeps the sidebar.brand seat
+# alive for the clock/wordmark; the composer input gets a terminal stylesheet.
+# Purely additive — nothing else in the default surface is disabled.
+- insert:
+    - id: ui-terminal-console
+      name: '@deepseek-ai/dsh-client-ui-terminal-console'
