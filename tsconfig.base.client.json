@@ -1,0 +1,10 @@
+{
+  // Client-side compiler shape shared by every packages/client/* package:
+  // browser library API, React JSX, no ambient node types.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": []
+  }
+}

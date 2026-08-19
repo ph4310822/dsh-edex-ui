@@ -1,0 +1,12 @@
+{
+  "name": "dsh-edex-ui",
+  "version": "0.1.0-rc.5",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek Harness terminal-shell plugin: CRT terminal web surface, PTY bridge, and system-monitor Host Remotes",
+  "scripts": {
+    "bundle": "tsdown -c packages/client/tsdown.config.ts"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "license": "MIT"
+}

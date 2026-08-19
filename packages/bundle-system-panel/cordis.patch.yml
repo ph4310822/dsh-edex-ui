@@ -1,0 +1,11 @@
+# The dsh-system-panel bundle patch: adds the left system panel to a web
+# profile. The panel registers into the root shell.overlay list slot as a
+# fixed left column (~20vw); its data comes from the systemMetrics Host Remote
+# (rich `overview`), which this layer also inserts. Purely additive — nothing
+# in the default surface is disabled.
+- insert:
+    - id: host-system-metrics
+      name: '@deepseek-ai/dsh-host-system-metrics'
+
+    - id: ui-system-panel
+      name: '@deepseek-ai/dsh-client-ui-system-panel'

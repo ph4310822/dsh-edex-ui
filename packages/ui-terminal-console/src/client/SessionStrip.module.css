@@ -1,0 +1,91 @@
+/* The horizontal session strip: content-height (wraps its content), with
+ * numbered conversation tabs separated by "|" and the New Session tab last. */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* No fixed height: the strip wraps its content (tabs + brand). */
+  padding: 6px 10px;
+  background: var(--dsw-alias-bg-layer-1, #000);
+  font-family: var(--ds-font-family-code, 'SF Mono', 'JetBrains Mono', Consolas, Menlo, monospace);
+  font-size: 11px;
+  color: var(--dsw-alias-label-primary, currentColor);
+}
+
+.brand {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+/* One numbered conversation tab. */
+.tab {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--dsw-alias-label-secondary, currentColor);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover,
+.tab[data-active] {
+  color: var(--dsw-alias-label-primary, currentColor);
+  border-color: var(--dsw-alias-border-l1, currentColor);
+  background: var(--dsw-alias-bg-layer-2, rgba(0, 0, 0, 0.2));
+}
+
+.tabTitle {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The "|" pipe between tabs. */
+.sep {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary, currentColor);
+  padding: 0 2px;
+  user-select: none;
+}
+
+/* "add new session" tab at the end of the strip. */
+.newSession {
+  flex: none;
+  background: transparent;
+  border: 1px dashed var(--dsw-alias-border-l1, currentColor);
+  border-radius: 2px;
+  color: var(--dsw-alias-label-secondary, currentColor);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.newSession:hover {
+  color: var(--dsw-alias-label-primary, currentColor);
+  border-color: var(--dsw-alias-label-primary, currentColor);
+}
+
+.running {
+  color: var(--dsw-alias-brand-primary, currentColor);
+}

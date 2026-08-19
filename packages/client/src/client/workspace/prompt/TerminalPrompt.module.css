@@ -1,0 +1,28 @@
+.prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-top: 1px solid #1d7a3f;
+}
+
+.mark {
+  color: #35e06a;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(53, 224, 106, 0.35);
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #35e06a;
+  font-family: inherit;
+  font-size: 13px;
+  caret-color: #35e06a;
+}
+
+.input::placeholder {
+  color: #1d7a3f;
+}

@@ -1,0 +1,7 @@
+# The dsh-crt-frame bundle patch: adds a CRT bezel around the whole web UI.
+# The widget registers into the root shell.overlay list slot (AppFrame renders
+# that layer above everything). Purely additive and click-through; nothing in
+# the default surface is disabled.
+- insert:
+    - id: ui-crt-frame
+      name: '@deepseek-ai/dsh-client-ui-crt-frame'

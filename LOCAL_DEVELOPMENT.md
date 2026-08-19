@@ -1,0 +1,331 @@
+# Developing & testing DeepSeek Harness plugins locally
+
+A general-purpose guide for building and testing a **standalone (external) DSH
+plugin** against a local `deepseek-harness` checkout **before publishing to
+npm** — without modifying the harness repository. It covers host plugins,
+plugins with a browser (client) half, and plugins that expose a Typert Remote
+RPC surface, and it documents the pitfalls that are otherwise only discoverable
+by trial and error.
+
+The [dsh-x402-wallet](https://github.com/ph4310822/dsh-x402-wallet) repository
+is the worked example: its `packages/` and `scripts/` implement everything
+described here.
+
+## Concepts in one paragraph
+
+A DSH plugin ships as one or more npm packages. The **host** package runs on
+the server (tools, services, a `cordis.yml`-loaded plugin entry). A package
+with a GUI half declares `dsh.client` and ships a **prebuilt browser bundle**
+that the harness's client-module system serves to the page. A package that
+exposes RPC to the GUI ships a generated **Typert** host face (`./typert`) and
+client contribution (`./remote`). An **installable bundle** package wraps all
+of it in a `cordis.patch.yml` layer (`dsh.bundle`), which is what
+`dsh plugin --profile <name> add <package>` activates. Users install the bundle
+into a profile; the harness composes the layers and boots.
+
+## Prerequisites
+
+- A `deepseek-harness` checkout built from source (`pnpm run build`); you run
+  the CLI from it as `pnpm dsh ...` (there is no global `dsh` unless you
+  installed one).
+- Node `^22.19.0 || >=24.0.0`, pnpm on PATH.
+- A plugin repo with a pnpm workspace (`packages/*`) and a build script
+  (`tsc -b <pkgs> && tsdown`).
+
+Everything in this guide writes only to `~/.dsh` (profile data) and your own
+repo — **the harness checkout is never modified.**
+
+---
+
+## 1. Make `pnpm install` / `pnpm build` work (the #1 pitfall)
+
+**Symptom.** `pnpm install` fails with a 404 for some `@deepseek-ai/...`
+package (e.g. `@deepseek-ai/dsh-type-meta`).
+
+**Cause.** pnpm auto-installs `peerDependencies` from npm by default, but the
+npm-published `@deepseek-ai` packages are partial and sometimes broken (one
+published rc depends on a package that was never released). The `@deepseek-ai`
+packages you need are developed **in the harness checkout**, not on npm.
+
+**Fix.**
+
+1. In your repo's `pnpm-workspace.yaml` (pnpm ≥10 reads settings here, **not**
+   `.npmrc`):
+
+   ```yaml
+   packages:
+     - 'packages/*'
+   autoInstallPeers: false
+   ```
+
+2. For build-time *type* resolution, symlink the harness packages into
+   `node_modules/@deepseek-ai` (pnpm does not prune stray symlinks — verified).
+   This repository ships `scripts/link-harness.sh`, which links every
+   `@deepseek-ai/*` package (plus the vendored `@deepseek-ai/cordis` and
+   `@deepseek-ai/schemastery`) from a sibling checkout:
+
+   ```sh
+   # after `pnpm install`; idempotent; DSH_HARNESS overrides the default ../deepseek-harness
+   ./scripts/link-harness.sh
+   ```
+
+   **Runtime is unaffected:** the harness's profile fallback
+   (`$DSH_HOME/profiles/node_modules`) provides `@deepseek-ai/*` when the
+   plugin actually runs, because `dsh` creates every profile with
+   `autoInstallPeers: false` + `nodeLinker: hoisted`. The symlinks exist only
+   so tsc/tsdown can see the types.
+
+---
+
+## 2. TypeScript build conventions (mirror the harness)
+
+The harness's own `tsconfig.base.json` is the reference; mirror its flags so
+your source compiles the same way and the emitted `lib/` matches what the
+harness expects at runtime.
+
+`tsconfig.base.json` essentials:
+
+```jsonc
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2024",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // Sources import siblings with explicit .ts/.tsx extensions; tsc rewrites
+    // them to .js in emit.
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    // Published packages ship declarations (package.json types -> lib/types/...).
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "types": ["node"]
+  }
+}
+```
+
+Per-package `tsconfig.json` (host and client packages):
+
+```jsonc
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
+  "include": ["src"]
+}
+```
+
+- **Client packages** override `"types": []` (no Node globals; JSX types come
+  from the `react`/`@types/react` devDependencies).
+- **Cross-package imports** resolve against the *built* declarations so a
+  package build never pulls another package's source across its `rootDir`
+  boundary. Map them in `paths` (e.g. `"@you/dsh-x": ["./packages/host/lib/types/index.d.ts"]`),
+  and build in dependency order (`tsc -b packages/host && tsc -b packages/ui`).
+- **Value imports across packages** (e.g. a client bundle importing a sibling's
+  generated `/remote`): declare the sibling as a `devDependency` with a
+  `link:` spec (e.g. `"@you/dsh-x": "link:../host"`) so bundlers resolve the
+  real package, and **do not** map that subpath in `paths` — a `paths` entry
+  pointing at a `.d.ts` makes rolldown bundle a declaration file
+  (`Missing export`).
+- devDependencies to add: `typescript`, `tsdown`, `tsx`, `vitest`,
+  `@types/node`; plus `react` + `@types/react` (matching the harness's React
+  18 types) for client code.
+
+Build script shape:
+
+```json
+"build": "tsc -b packages/host && tsc -b packages/ui && tsdown"
+```
+
+with a root `tsdown.config.ts` in workspace mode (`workspace: ['packages/host',
+'packages/ui']`, `entry: ['lib/types/{index,invariant}.js']`, `outDir: 'lib'`,
+`format: ['esm']`, `platform: 'node'`, `clean: false`) that bundles each
+package's tsc output. Package-local configs replace the root defaults for that
+package.
+
+---
+
+## 3. The browser bundle (client half)
+
+The harness's `clientBundle` preset is **not published** — the cookbook states
+external packages must reproduce its output format. The contract (see
+`packages/ui/tsdown.config.ts` in this repo for a working reproduction):
+
+- **Loader handoff.** The bundle must start with
+  `window.__ModuleLoader__.load({ id: <exact published package name>, factory: (require) => {`
+  and end with `return module.exports; } });` plus the
+  `var module = { exports: {} }; var exports = module.exports;` intro. The
+  `id` must equal the package name **exactly** — the runtime rejects a
+  mismatch (`bundle ... loaded without registering "<id>"`).
+- **Externals** — resolved from the page's loader module table, never bundled:
+  `react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`,
+  `@deepseek-ai/cordis`, `@deepseek-ai/dsh-client-ui-slots`,
+  `@deepseek-ai/dsh-client-web-react`, `@deepseek-ai/dsh-client-ui-primitives`,
+  `@deepseek-ai/dsh-client-ui-attachment`,
+  `@deepseek-ai/dsh-client-schema-form`, plus
+  `@deepseek-ai/dsh-client-runtime/client`. Everything else inlines
+  (`noExternal: (id) => externals.includes(id) ? undefined : true`).
+- **Purity gate.** Any other `@deepseek-ai/*` *value* import is a build error;
+  generated `/remote` contributions from your own scope inline (theirs are
+  self-contained descriptor lists).
+- **CSS modules.** Compile `*.module.css` via lightningcss
+  (`cssModules: { pattern: '[hash]_[local]' }`), emit the class map as the
+  default export, and inject one `<style data-plugin data-plugin-css>` tag per
+  module.
+- **Output.** `format: 'cjs'`, `platform: 'browser'`, `entryFileNames:
+  'client.js'` → `lib/client.js`, which **ships prebuilt** in the npm package
+  (`files`).
+
+---
+
+## 4. Typert Remotes (host RPC surface for the GUI)
+
+If your host exposes methods the browser calls (`ctx.remote.<ns>.<method>`),
+two generated artifacts are involved:
+
+- Host face: `package.json` exports `./typert` → `lib/typert.host.js`
+  (a `TYPERT` manifest). The harness's **typert-loader** imports it and
+  registers the endpoints into the gateway. The manifest's `package` field
+  must equal the package's npm name — the loader rejects an ownership
+  mismatch, and the endpoint then answers **HTTP 404**.
+- Client contribution: exports `./remote` → `lib/typert.remote-client.js`
+  (a `TYPERT_REMOTE` contribution). Your client code mounts it with
+  `ctx.remote.$mount(contribution)`.
+
+Two traps:
+
+1. **Mount and consume in one fiber?** Do not put `remote.<ns>` in `inject`
+   (it would wait on a service only your own `apply` creates — a permanent
+   PENDING entry), and do not read `ctx.remote.<ns>` either: cordis wraps
+   services in traceable proxies that re-dispatch such reads as traced
+   `ctx['remote.<ns>']` lookups requiring `inject`
+   (`cannot get property "remote.<ns>" without inject`). Mount the
+   contribution in `apply` (after `await ctx.remote.$mount(...)`), then read
+   the namespace once via the non-traced store lookup and reuse that handle:
+
+   ```ts
+   const ns = ctx.get('remote.<ns>') as typeof ctx.remote.<ns>
+   // later: ns.method(...)
+   ```
+
+   (This is the harness's own documented pattern — post-mortem 0001.)
+2. **The generator cannot run outside the harness workspace.** The harness's
+   typert generator only recognizes `@deepseek-ai/dsh-typert-protocol` symbols
+   when that package is a *registration under `<root>/packages`*; for an
+   external package it reports "no Remote methods". So commit the generated
+   artifacts and maintain them by hand: regenerate inside the harness
+   workspace when the `@Remote` surface changes, copy `lib/` back, and run a
+   scope-repoint pass. This repo ships `scripts/repoint-typert.mjs` for the
+   rename case (the artifacts must reference your package's real name in the
+   `package` field and manifest symbol IDs).
+
+---
+
+## 5. Install into a profile and run
+
+```sh
+# 1. build your packages
+cd /path/to/your-plugin && pnpm build
+
+# 2. install the local bundle checkout into the web profile
+#    (from the harness checkout; the `file:` prefix is REQUIRED)
+cd /path/to/deepseek-harness
+pnpm dsh plugin --profile web add file:/absolute/path/to/your-plugin/packages/bundle
+
+# 3. verify the layer composes without booting
+pnpm dsh --profile web --dump-config   # look for "# == <your-bundle>"
+
+# 4. boot on a non-default port (default is 3080)
+pnpm dsh web --port 3081               # open http://127.0.0.1:3081, hard-refresh (⌘⇧R)
+```
+
+Why `file:`: a bare path is recorded as pnpm `link:`, which **skips installing
+the bundle's dependencies** (your host/ui packages and their runtime deps never
+land in the profile's `node_modules` and the boot cannot resolve them).
+
+Verification:
+
+- A clean boot prints `dsh web: http://127.0.0.1:<port>` and no
+  `did not activate` error. The boot audit throws on any pending/failed entry,
+  so a running server means the tree settled.
+- Client half: `curl -s http://127.0.0.1:<port>/ | grep <your-id>` shows the
+  entry in `window.__DSH_BOOT__`, and the served bundle's
+  `__ModuleLoader__.load({ id: ... })` matches the graph entry id.
+- RPC endpoints: probe the wire directly (the message shape is
+  `{"type":"client-request","rpcId":"...","method":"<ns>/<method>","payload":{"args":{}}}`):
+
+  ```sh
+  curl -s -X POST http://127.0.0.1:3081/api/<ns>/<method> \
+    -H 'content-type: application/json' \
+    -d '{"type":"client-request","rpcId":"probe","method":"<ns>/<method>","payload":{"args":{}}}'
+  ```
+
+  A validation error past the route check means the endpoint is registered; a
+  plain `not found` means it is not.
+
+---
+
+## 6. Iteration loop
+
+Profile installs are **copies**, not symlinks. After editing sources:
+
+```sh
+cd /path/to/your-plugin && pnpm build
+cd ~/.dsh/profiles/<name> && pnpm install   # re-copies the rebuilt lib/ from the checkout
+# then restart: cd /path/to/deepseek-harness && pnpm dsh web --port 3081
+```
+
+A stale profile copy is the usual cause of `loaded without registering`
+(loader-id mismatch) or a missing GUI — always refresh the profile after a
+rebuild.
+
+---
+
+## 7. Publish + clean-room check
+
+- `lib/` is the npm payload: **build immediately before publishing** (a stale
+  client bundle id or typert `package` field only fails at boot, not at
+  `pnpm build`).
+- The bundle package's `file:` dependency specs must be flipped to `^` ranges
+  before publishing (npm cannot resolve `file:../host`). This repo ships
+  `scripts/prepublish.mjs` for the flip; restore afterwards with
+  `git checkout packages/bundle/package.json`.
+- Publish in dependency order: host → ui → bundle.
+- Simulate the real npm experience in a scratch home (no registry access
+  needed for the plugin itself, but this exercises the exact consumer path):
+
+  ```sh
+  DSH_HOME=/tmp/dsh-release-check pnpm dsh plugin --profile web add <your-bundle-name>
+  DSH_HOME=/tmp/dsh-release-check pnpm dsh web --port 3082
+  ```
+
+---
+
+## Symptom → cause → fix checklist
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `pnpm install` 404 for `@deepseek-ai/...` | peer auto-install fetches broken npm prereleases | `autoInstallPeers: false` in `pnpm-workspace.yaml` |
+| tsc: `Cannot find module '@deepseek-ai/...'` | no type source | `scripts/link-harness.sh` (symlink checkout into `node_modules/@deepseek-ai`) |
+| tsc TS5097 (`.ts` extension imports) | missing flags | `allowImportingTsExtensions` + `rewriteRelativeImportExtensions` |
+| tsc TS6059 (file outside `rootDir`) | `paths` → sibling **source** | point `paths` at built `lib/types/*.d.ts`; build host first |
+| rolldown `Missing export` on a subpath | `paths` maps it to a `.d.ts` | devDep `link:` + remove that `paths` entry |
+| boot: `pending (waiting for service: remote.<ns>)` | plugin injects a service it must provide itself | drop from `inject`; `ctx.remote.$mount` in `apply` |
+| wallet: `cannot get property "remote.<ns>" without inject` | traced read re-dispatch | read once via `ctx.get('remote.<ns>')` and reuse the handle |
+| RPC `HTTP 404` for `/api/<ns>/<method>` | typert host face not registered (`package` mismatch) | repoint/regenerate `lib/typert.host.js` so `TYPERT.package` = npm name |
+| `loaded without registering "<id>"` | stale profile copy / wrong bundle id | rebuild + `pnpm install` in profile; bundle id must equal the published name |
+| profile install "installs" but deps missing | bare path recorded as `link:` | use the `file:` prefix |
+
+## Reference implementation
+
+See [dsh-x402-wallet](https://github.com/ph4310822/dsh-x402-wallet) —
+`packages/host`, `packages/ui`, `packages/bundle`, and `scripts/`
+(`link-harness.sh`, `repoint-typert.mjs`, `prepublish.mjs`) implement all of
+the above, and its README documents the known harness limitations (forwarded
+events allowlist, typert generator gap, profile copies, Node engine).

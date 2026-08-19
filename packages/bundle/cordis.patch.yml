@@ -1,0 +1,124 @@
+# The dsh-terminal-shell bundle patch: replaces the default web surface with
+# the full-screen CRT terminal shell.
+#
+# Applied after dsh-web-app's layer, so the disables here target the default
+# surface rows by id (a patch replaces the targeted row's whole config, so a
+# `disabled: true` restatement is all a disable needs).
+#
+# Three default rows stay ENABLED because they own services the shell's boot
+# graph depends on, even though their surface never renders here:
+#   - ui-layout    provides `layout` (the app-shell entry injects it) and its
+#                  AppFrame registers into the built-in 'root' slot at the
+#                  default priority — the terminal frame registers 'root' at a
+#                  LOWER priority (priority: -1, see the ui-terminal client),
+#                  so it shadows AppFrame and renders instead.
+#   - ui-theme     provides `theme` (ui-layout injects it).
+#   - ui-settings  provides `settingsScope` (ui-theme and the locale plugin
+#                  inject it).
+# The remaining surface rows below are disabled; their slots simply have no
+# occupants. The infrastructure rows (modules, connection, api-remotes,
+# client-runtime, cordis-client-runner, locale) stay untouched.
+
+# ── disable the default web surface ─────────────────────────────────────────
+
+# The conversation view registers the Definitions this plugin registers itself.
+- id: ui-conversation
+  disabled: true
+
+- id: ui-sidebar
+  disabled: true
+
+- id: ui-settings-general
+  disabled: true
+
+- id: ui-settings-models
+  disabled: true
+
+- id: ui-settings-plugin-inventory
+  disabled: true
+
+- id: ui-tool
+  disabled: true
+
+- id: ui-cordis
+  disabled: true
+
+- id: ui-workflow-run
+  disabled: true
+
+- id: ui-deliverables
+  disabled: true
+
+- id: ui-workspace
+  disabled: true
+
+- id: ui-input-trigger
+  disabled: true
+
+- id: ui-commands
+  disabled: true
+
+- id: ui-skill
+  disabled: true
+
+- id: ui-subagent
+  disabled: true
+
+- id: ui-jobs
+  disabled: true
+
+- id: ui-goal
+  disabled: true
+
+- id: ui-message-feedback
+  disabled: true
+
+- id: ui-model-selection
+  disabled: true
+
+- id: ui-permission
+  disabled: true
+
+- id: ui-agent-preset
+  disabled: true
+
+- id: ui-settings-plugins
+  disabled: true
+
+- id: ui-plan
+  disabled: true
+
+- id: ui-user-questions
+  disabled: true
+
+- id: ui-trajectory
+  disabled: true
+
+# ── insert the terminal shell surface ───────────────────────────────────────
+
+# Host plane: the PTY registry service, the bash backend it spawns, and the two
+# Host Remotes the browser half drives (systemMetrics + terminalUI). The bridge
+# injects `terminals`, so the pty row precedes it in this insert.
+- insert:
+    - id: terminal-pty
+      name: '@deepseek-ai/dsh-terminal'
+
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      config:
+        # The bridge spawns `type: 'bash'`; the backend's default registry type
+        # is 'shell', so the row must pin backendType or spawn answers
+        # NO_BACKEND ("no pty backend registered for 'bash'").
+        backendType: 'bash'
+        timeoutMs: 300000
+
+    - id: host-system-metrics
+      name: '@deepseek-ai/dsh-host-system-metrics'
+
+    - id: host-terminal-bridge
+      name: '@deepseek-ai/dsh-host-terminal-bridge'
+
+    # Browser roster: the terminal shell client (dsh.client package; its node
+    # half is a no-op). The modules row scans this tree into window.__DSH_BOOT__.
+    - id: ui-terminal
+      name: '@deepseek-ai/dsh-client-ui-terminal'

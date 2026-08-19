@@ -1,0 +1,28 @@
+{
+  "name": "@deepseek-ai/dsh-terminal-shell",
+  "description": "Terminal-shell profile layer: disables the default web surface and inserts the CRT terminal shell plugin plus its two Host Remotes",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/bundle/terminal-shell"
+  },
+  "type": "module",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "dependencies": {
+    "@deepseek-ai/dsh-client-ui-terminal": "file:../client",
+    "@deepseek-ai/dsh-host-system-metrics": "file:../host/system-metrics",
+    "@deepseek-ai/dsh-host-terminal-bridge": "file:../host/terminal-bridge"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@deepseek-ai/dsh-theme-terminal",
+  "description": "Adds the terminal (CRT) theme to a web profile: registers the theme with the theme service and contributes an Appearance row to pick it",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/bundle-theme-terminal"
+  },
+  "type": "module",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "dependencies": {
+    "@deepseek-ai/dsh-client-ui-theme-terminal": "file:../ui-theme-terminal"
+  },
+  "license": "MIT"
+}
