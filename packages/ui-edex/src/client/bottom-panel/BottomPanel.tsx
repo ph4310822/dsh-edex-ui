@@ -1,11 +1,11 @@
 /**
- * Bottom-left filesystem browser: current path header, icon grid of entries,
- * and the storage usage bar.
+ * Bottom panel content: the bottom-left filesystem browser — current path
+ * header, icon grid of entries, and the storage usage bar.
  */
 import { useEffect } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
-import type { FilesState } from './types.ts'
-import css from './FilesBrowser.module.css'
+import type { FilesState } from '../shared/types.ts'
+import css from './BottomPanel.module.css'
 
 /** Icon glyph per entry kind. */
 function glyph(isDirectory: boolean): string {
@@ -23,7 +23,7 @@ function EntryCell({ name, isDirectory, onOpen }: { name: string; isDirectory: b
 }
 
 /** The bottom-left content (rendered inside the eDEX shell's bottom-left cell). */
-export function FilesBrowser({
+export function BottomPanel({
   useFiles, refresh, navigate,
 }: {
   useFiles: SnapshotSelectorHook<FilesState>
@@ -39,7 +39,7 @@ export function FilesBrowser({
   const storagePct = files.storage.usedPct
 
   return (
-    <div className={css.panel} data-testid="edex-files-browser">
+    <div className={css.panel} data-testid="edex-bottom-panel">
       <div className={css.pathRow}>
         <span className={css.pathKey}>DIR</span>
         <span className={css.path} title={files.path}>{files.path === '' ? '—' : files.path}</span>

@@ -1,14 +1,14 @@
 /**
- * Right column content: network interface status header, an encom-globe
- * WebGL world view with endpoint markers and spline links, and a dual up/down
+ * Right bar content: network interface status header, an encom-globe WebGL
+ * world view with endpoint markers and spline links, and a dual up/down
  * traffic sparkline.
  */
 import { useEffect, useRef } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import Globe from 'encom-globe'
-import { generateGlobeTiles } from './tiles.ts'
-import type { NetworkSnapshot } from './types.ts'
-import css from './NetworkPanel.module.css'
+import { generateGlobeTiles } from '../shared/tiles.ts'
+import type { NetworkSnapshot } from '../shared/types.ts'
+import css from './RightBar.module.css'
 
 /** Sample endpoints (lat/lon) drawn on the globe. */
 const ENDPOINTS: readonly { label: string; lat: number; lon: number }[] = [
@@ -103,11 +103,11 @@ function TrafficChart({ up, down }: { up: readonly number[]; down: readonly numb
 }
 
 /** The right column content (rendered inside the eDEX shell's right bar). */
-export function NetworkPanel({ useNetwork }: { useNetwork: SnapshotSelectorHook<NetworkSnapshot> }) {
+export function RightBar({ useNetwork }: { useNetwork: SnapshotSelectorHook<NetworkSnapshot> }) {
   const network = useNetwork(s => s)
 
   return (
-    <div className={css.panel} data-testid="edex-network-panel">
+    <div className={css.panel} data-testid="edex-right-bar">
       <section className={css.section}>
         <div className={css.title}>NETWORK STATUS</div>
         <div className={css.specLine}><span className={css.key}>INTERFACE</span><span>{network.network.interfaceName}</span></div>

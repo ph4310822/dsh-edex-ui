@@ -14,17 +14,17 @@
  */
 import { useLayoutEffect, useRef } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
-import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from './types.ts'
-import { FilesBrowser } from './FilesBrowser.tsx'
-import { NetworkPanel } from './NetworkPanel.tsx'
-import { SystemPanel } from './SystemPanel.tsx'
+import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
+import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
+import { RightBar } from '../right-bar/RightBar.tsx'
+import { LeftBar } from '../left-bar/LeftBar.tsx'
 import css from './EdexShell.module.css'
 // Side-effect only: rethemes the stock composer capsule into a terminal input
 // and the sidebar (new-session button + workspace tree) into terminal style
 // (:global rules over their stable data hooks). The module class maps are
 // unused; importing the files injects their <style data-plugin> tags.
-import './TerminalComposer.module.css'
-import './TerminalSidebar.module.css'
+import '../theme/TerminalComposer.module.css'
+import '../theme/TerminalSidebar.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
 export const CENTER_LEFT = '20vw'
@@ -92,13 +92,13 @@ export function EdexShell({
   return (
     <div ref={shellRef} className={css.shell} data-edex-shell="" data-testid="edex-shell">
       <aside className={css.leftBar}>
-        <SystemPanel usePanel={usePanel} />
+        <LeftBar usePanel={usePanel} />
       </aside>
       <aside className={css.rightBar}>
-        <NetworkPanel useNetwork={useNetwork} />
+        <RightBar useNetwork={useNetwork} />
       </aside>
       <section className={css.bottomLeft}>
-        <FilesBrowser useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} />
+        <BottomPanel useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} />
       </section>
       <section className={css.bottomRight} aria-hidden="true" />
       {/* Same faint CRT scanline texture as the panel cells, over the center

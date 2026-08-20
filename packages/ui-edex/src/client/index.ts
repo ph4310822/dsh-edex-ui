@@ -16,10 +16,10 @@ import type { ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/clien
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 // The generated Host Remote contribution; mounted in apply (inlined at build).
 import systemMetricsRemote from '@deepseek-ai/dsh-host-system-metrics/remote'
-import { EdexShell, type EdexShellInjected } from './EdexShell.tsx'
-import { FilesController } from './files.ts'
-import { EdexPoller } from './monitor.ts'
-import type { SystemMetricsRemote } from './types.ts'
+import { EdexShell, type EdexShellInjected } from './frame/EdexShell.tsx'
+import { FilesController } from './shared/files.ts'
+import { EdexPoller } from './shared/monitor.ts'
+import type { SystemMetricsRemote } from './shared/types.ts'
 
 /** Required services: the slot registry, the theme service, and the Remote carrier (namespace mounted in apply). */
 export const inject = ['slots', 'remote', 'theme']

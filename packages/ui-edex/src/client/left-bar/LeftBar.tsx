@@ -1,12 +1,12 @@
 /**
- * Left column content: digital clock + system/hardware specs, CPU/memory
+ * Left bar content: digital clock + system/hardware specs, CPU/memory
  * telemetry with per-core sparklines, and the top-processes table.
  */
 import { useEffect, useState } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ProcessSample } from '@deepseek-ai/dsh-host-system-metrics/types'
-import type { PanelSnapshot } from './types.ts'
-import css from './SystemPanel.module.css'
+import type { PanelSnapshot } from '../shared/types.ts'
+import css from './LeftBar.module.css'
 
 /** HH:MM:SS. */
 function clockText(date: Date): string {
@@ -113,7 +113,7 @@ function ProcessTable({ processes }: { processes: readonly ProcessSample[] }) {
 }
 
 /** The left column content (rendered inside the eDEX shell's left bar). */
-export function SystemPanel({ usePanel }: { usePanel: SnapshotSelectorHook<PanelSnapshot> }) {
+export function LeftBar({ usePanel }: { usePanel: SnapshotSelectorHook<PanelSnapshot> }) {
   const panel = usePanel(s => s)
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -124,10 +124,10 @@ export function SystemPanel({ usePanel }: { usePanel: SnapshotSelectorHook<Panel
   const year = now.getFullYear()
 
   return (
-    <div className={css.panel} data-testid="edex-system-panel">
+    <div className={css.panel} data-testid="edex-left-bar">
       {/* ── clock & system specs ── */}
       <section className={css.section}>
-        <div className={css.clock} data-testid="edex-system-panel-clock">{clockText(now)}</div>
+        <div className={css.clock} data-testid="edex-left-bar-clock">{clockText(now)}</div>
         <div className={css.specs}>
           <div className={css.specLine}><span className={css.specKey}>YEAR</span><span>{year}</span></div>
           <div className={css.specLine}><span className={css.specKey}>UPTIME</span><span>{durationText(panel.uptimeSeconds)}</span></div>
