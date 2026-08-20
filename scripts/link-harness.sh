@@ -48,5 +48,15 @@ link_react() {
 }
 link_react 'react@18*/node_modules/react' "$ROOT/node_modules/react"
 link_react '@types+react@18*/node_modules/@types/react' "$ROOT/node_modules/@types/react"
+link_react '@types+node@22*/node_modules/@types/node' "$ROOT/node_modules/@types/node"
+
+# Vendored framework packages (the harness overrides them to vendor/*; they
+# are not under packages/, so the loop above misses them).
+for v in cordis cosmokit schemastery; do
+  if [ -d "$HARNESS/vendor/$v" ] && [ ! -e "$ROOT/node_modules/@deepseek-ai/$v" ]; then
+    ln -s "$HARNESS/vendor/$v" "$ROOT/node_modules/@deepseek-ai/$v"
+    linked=$((linked + 1))
+  fi
+done
 
 echo "link-harness: linked $linked packages (from $HARNESS)"

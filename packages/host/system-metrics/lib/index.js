@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readdir } from "node:fs/promises";
+import { open, readdir, stat } from "node:fs/promises";
 import { promisify } from "node:util";
 import { Remote, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { cpus, freemem, loadavg, networkInterfaces, totalmem, uptime } from "node:os";
@@ -276,12 +276,14 @@ let SystemMetricsService = (() => {
 	let _snapshot_decorators;
 	let _overview_decorators;
 	let _listDirectory_decorators;
+	let _readFile_decorators;
 	return class SystemMetricsService extends _classSuper {
 		static {
 			const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
 			_snapshot_decorators = [Remote("snapshot")];
 			_overview_decorators = [Remote("overview")];
 			_listDirectory_decorators = [Remote("listDirectory")];
+			_readFile_decorators = [Remote("readFile")];
 			__esDecorate(this, null, _snapshot_decorators, {
 				kind: "method",
 				name: "snapshot",
@@ -312,6 +314,17 @@ let SystemMetricsService = (() => {
 				access: {
 					has: (obj) => "listDirectory" in obj,
 					get: (obj) => obj.listDirectory
+				},
+				metadata: _metadata
+			}, null, _instanceExtraInitializers);
+			__esDecorate(this, null, _readFile_decorators, {
+				kind: "method",
+				name: "readFile",
+				static: false,
+				private: false,
+				access: {
+					has: (obj) => "readFile" in obj,
+					get: (obj) => obj.readFile
 				},
 				metadata: _metadata
 			}, null, _instanceExtraInitializers);
@@ -412,7 +425,189 @@ let SystemMetricsService = (() => {
 				};
 			}
 		}
+		/**
+		* Read one file for the bottom-right preview pane. Text payloads are
+		* capped at 64 KiB, images at 4 MiB, videos at 12 MiB; oversized files are
+		* truncated and flagged rather than refused. Kind is decided by extension
+		* with a UTF-8 sniff fallback for unknown extensions.
+		* @param path - absolute file path.
+		* @returns the preview payload (or an error string when unreadable).
+		*/
+		async readFile(path) {
+			try {
+				const info = await stat(path);
+				if (info.isDirectory()) return {
+					path,
+					kind: "unsupported",
+					mime: "",
+					sizeBytes: 0,
+					truncated: false,
+					text: null,
+					dataUrl: null,
+					error: "is a directory"
+				};
+				const byExtension = previewKindOf(path.slice(path.lastIndexOf(".") + 1).toLowerCase());
+				if (byExtension !== null && byExtension.kind !== "text") {
+					const cap = byExtension.kind === "image" ? PREVIEW_IMAGE_CAP : PREVIEW_VIDEO_CAP;
+					const buffer = await readFirst(path, Math.min(info.size, cap));
+					return {
+						path,
+						kind: byExtension.kind,
+						mime: byExtension.mime,
+						sizeBytes: info.size,
+						truncated: info.size > cap,
+						text: null,
+						dataUrl: `data:${byExtension.mime};base64,${buffer.toString("base64")}`,
+						error: null
+					};
+				}
+				const sample = await readFirst(path, Math.min(info.size, 8192));
+				const kind = byExtension ?? sniffTextKind(sample);
+				if (kind === null) return {
+					path,
+					kind: "unsupported",
+					mime: "application/octet-stream",
+					sizeBytes: info.size,
+					truncated: info.size > PREVIEW_TEXT_CAP,
+					text: null,
+					dataUrl: null,
+					error: null
+				};
+				const buffer = info.size > PREVIEW_TEXT_CAP ? await readFirst(path, PREVIEW_TEXT_CAP) : sample;
+				return {
+					path,
+					kind: "text",
+					mime: kind.mime,
+					sizeBytes: info.size,
+					truncated: info.size > PREVIEW_TEXT_CAP,
+					text: buffer.toString("utf8"),
+					dataUrl: null,
+					error: null
+				};
+			} catch (error) {
+				return {
+					path,
+					kind: "unsupported",
+					mime: "",
+					sizeBytes: 0,
+					truncated: false,
+					text: null,
+					dataUrl: null,
+					error: error instanceof Error ? error.message : String(error)
+				};
+			}
+		}
 	};
 })();
+/** Read at most `length` bytes from the file start. */
+async function readFirst(path, length) {
+	const handle = await open(path, "r");
+	try {
+		const buffer = Buffer.alloc(length);
+		const { bytesRead } = await handle.read(buffer, 0, length, 0);
+		return bytesRead === length ? buffer : buffer.subarray(0, bytesRead);
+	} finally {
+		await handle.close();
+	}
+}
+/** Preview payload caps (bytes). */
+const PREVIEW_TEXT_CAP = 64 * 1024;
+const PREVIEW_IMAGE_CAP = 4 * 1024 * 1024;
+const PREVIEW_VIDEO_CAP = 12 * 1024 * 1024;
+/** Image MIME by extension. */
+const IMAGE_MIME = {
+	png: "image/png",
+	jpg: "image/jpeg",
+	jpeg: "image/jpeg",
+	gif: "image/gif",
+	webp: "image/webp",
+	svg: "image/svg+xml",
+	bmp: "image/bmp",
+	ico: "image/x-icon",
+	avif: "image/avif"
+};
+/** Video MIME by extension. */
+const VIDEO_MIME = {
+	mp4: "video/mp4",
+	m4v: "video/mp4",
+	webm: "video/webm",
+	ogv: "video/ogg",
+	ogg: "video/ogg",
+	mov: "video/quicktime"
+};
+/** Extensions treated as plain text. */
+const TEXT_EXTENSIONS = new Set([
+	"txt",
+	"text",
+	"md",
+	"markdown",
+	"json",
+	"yaml",
+	"yml",
+	"toml",
+	"ini",
+	"cfg",
+	"conf",
+	"log",
+	"csv",
+	"ts",
+	"tsx",
+	"js",
+	"jsx",
+	"mjs",
+	"cjs",
+	"css",
+	"scss",
+	"html",
+	"htm",
+	"xml",
+	"sh",
+	"bash",
+	"zsh",
+	"py",
+	"rb",
+	"go",
+	"rs",
+	"java",
+	"c",
+	"h",
+	"cpp",
+	"hpp",
+	"cs",
+	"php",
+	"sql",
+	"env",
+	"lock"
+]);
+/** Decide the preview kind from the file extension (null = sniff). */
+function previewKindOf(extension) {
+	const imageMime = IMAGE_MIME[extension];
+	if (imageMime !== void 0) return {
+		kind: "image",
+		mime: imageMime
+	};
+	const videoMime = VIDEO_MIME[extension];
+	if (videoMime !== void 0) return {
+		kind: "video",
+		mime: videoMime
+	};
+	if (TEXT_EXTENSIONS.has(extension)) return {
+		kind: "text",
+		mime: "text/plain"
+	};
+	return null;
+}
+/** UTF-8 sniff: no NUL bytes and few control bytes → likely plain text. */
+function sniffTextKind(sample) {
+	let control = 0;
+	for (const byte of sample) {
+		if (byte === 0) return null;
+		if (byte < 32 && byte !== 9 && byte !== 10 && byte !== 13) control += 1;
+	}
+	return sample.length > 0 && control / sample.length < .05 ? {
+		kind: "text",
+		mime: "text/plain"
+	} : null;
+}
 //#endregion
 export { SystemMetricsService, SystemMetricsService as default };

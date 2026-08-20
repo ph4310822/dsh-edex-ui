@@ -1,6 +1,8 @@
 /**
  * Bottom panel content: the bottom-left filesystem browser — current path
- * header, icon grid of entries, and the storage usage bar.
+ * header, icon grid of entries, and the storage usage bar. Clicking a file
+ * selects it for the bottom-right preview pane (the selected cell is
+ * highlighted); clicking a directory navigates into it.
  */
 import { useEffect } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
@@ -13,9 +15,17 @@ function glyph(isDirectory: boolean): string {
 }
 
 /** Grid cell for one entry. */
-function EntryCell({ name, isDirectory, onOpen }: { name: string; isDirectory: boolean; onOpen: () => void }) {
+function EntryCell({
+  name, isDirectory, selected, onOpen,
+}: { name: string; isDirectory: boolean; selected: boolean; onOpen: () => void }) {
   return (
-    <button type="button" className={css.cell} onClick={onOpen} data-testid="edex-fs-entry">
+    <button
+      type="button"
+      className={css.cell}
+      data-selected={selected || undefined}
+      onClick={onOpen}
+      data-testid="edex-fs-entry"
+    >
       <span className={css.icon}>{glyph(isDirectory)}</span>
       <span className={css.name}>{name}</span>
     </button>
@@ -24,11 +34,12 @@ function EntryCell({ name, isDirectory, onOpen }: { name: string; isDirectory: b
 
 /** The bottom-left content (rendered inside the eDEX shell's bottom-left cell). */
 export function BottomPanel({
-  useFiles, refresh, navigate,
+  useFiles, refresh, navigate, selectFile,
 }: {
   useFiles: SnapshotSelectorHook<FilesState>
   refresh: () => void
   navigate: (name: string) => void
+  selectFile: (name: string) => void
 }) {
   const files = useFiles(s => s)
 
@@ -56,7 +67,11 @@ export function BottomPanel({
             key={entry.name}
             name={entry.name}
             isDirectory={entry.isDirectory}
-            onOpen={() => { if (entry.isDirectory) navigate(entry.name) }}
+            selected={files.selected === entry.name}
+            onOpen={() => {
+              if (entry.isDirectory) navigate(entry.name)
+              else selectFile(entry.name)
+            }}
           />
         ))}
       </div>

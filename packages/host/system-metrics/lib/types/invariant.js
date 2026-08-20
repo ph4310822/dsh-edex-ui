@@ -9,4 +9,3 @@ const install = () => { };
 /** Register this package's invariant companion. */
 export const apply = (ctx) => Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install));
 /* jscpd:ignore-end */
-//# sourceMappingURL=invariant.js.map

@@ -79,6 +79,12 @@
   background: var(--edex-panel-2);
 }
 
+/* The selected (previewed) file cell. */
+.cell[data-selected] {
+  border-color: var(--edex-green);
+  background: rgba(70, 242, 130, 0.12);
+}
+
 .icon {
   font-size: 16px;
   color: var(--edex-cyan);

@@ -93,6 +93,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
       inject: (): EdexShellInjected => ({
         refreshFiles: () => { void files.refresh() },
         navigateFiles: (name: string) => { files.navigate(name) },
+        selectFile: (name: string) => { void files.selectFile(name) },
         hooks: {
           panel: poller.panel,
           network: poller.network,

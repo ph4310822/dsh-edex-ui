@@ -1,0 +1,92 @@
+/* Bottom-right preview pane: header strip + scrollable body. */
+
+.pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--edex-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.title {
+  color: var(--edex-amber);
+  letter-spacing: 2px;
+  flex: none;
+}
+
+.file {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--edex-green);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.hint {
+  text-align: center;
+  color: var(--edex-dim);
+  letter-spacing: 1px;
+}
+
+.error {
+  padding: 8px 10px;
+  color: var(--edex-red);
+  font-size: 10px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.truncated {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-size: 9px;
+  color: var(--edex-amber);
+  pointer-events: none;
+}
+
+.text {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  font-family: var(--edex-font, 'JetBrains Mono', 'Fira Code', Consolas, Menlo, monospace);
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--edex-green);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.media {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
+  background: #000;
+}

@@ -7,8 +7,10 @@
  */
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import type {
-  DirectoryListing, HardwareInfo, NetworkInfo, ProcessSample, StorageInfo, SystemOverview,
+  DirectoryListing, FilePreview, HardwareInfo, NetworkInfo, ProcessSample, StorageInfo, SystemOverview,
 } from '@deepseek-ai/dsh-host-system-metrics/types'
+
+export type { FilePreview }
 
 /** Bare observable snapshot source (getSnapshot + subscribe), the slot hooks seat. */
 export interface ObservableSource<T> {
@@ -20,6 +22,7 @@ export interface ObservableSource<T> {
 export interface SystemMetricsRemote {
   overview: () => Promise<RemoteResult<SystemOverview>>
   listDirectory: (path: string) => Promise<RemoteResult<DirectoryListing>>
+  readFile: (path: string) => Promise<RemoteResult<FilePreview>>
 }
 
 /** Left-bar system telemetry snapshot (host overview + client-derived deltas/history). */
@@ -66,6 +69,10 @@ export interface FilesState {
   readonly storage: StorageInfo
   readonly error: string | null
   readonly phase: 'loading' | 'ready'
+  /** Currently selected file name (for the bottom-right preview), or null. */
+  readonly selected: string | null
+  /** Preview payload of the selected file, or null while none is selected. */
+  readonly preview: FilePreview | null
 }
 
 /** Empty snapshot values rendered before the first successful overview. */
@@ -107,4 +114,6 @@ export const EMPTY_FILES: FilesState = {
   storage: { path: '', totalBytes: 0, usedBytes: 0, usedPct: 0 },
   error: null,
   phase: 'loading',
+  selected: null,
+  preview: null,
 }

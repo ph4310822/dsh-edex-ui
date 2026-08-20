@@ -59,6 +59,17 @@ const _deepseek_ai_dsh_host_system_metrics_systemMetrics_overview_result$schema 
   'usedPct': z.number().readonly(),
 }).readonly(),
 })
+const _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_parameter_0$schema = z.string()
+const _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_result$schema = z.object({
+  'path': z.string().readonly(),
+  'kind': z.union([z.literal('text'), z.literal('image'), z.literal('video'), z.literal('unsupported')]).readonly(),
+  'mime': z.string().readonly(),
+  'sizeBytes': z.number().readonly(),
+  'truncated': z.boolean().readonly(),
+  'text': z.union([z.literal(null), z.string()]).readonly(),
+  'dataUrl': z.union([z.literal(null), z.string()]).readonly(),
+  'error': z.union([z.literal(null), z.string()]).readonly(),
+})
 const _deepseek_ai_dsh_host_system_metrics_systemMetrics_snapshot_result$schema = z.object({
   'loadavg': z.tuple([z.number(), z.number(), z.number()]).readonly(),
   'cpuBusyRatio': z.number().readonly(),
@@ -113,6 +124,31 @@ export const TYPERT = {
         schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_overview_result$schema,
       },
       sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":245,"column":9},
+    },
+    {
+      id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/readFile',
+      service: 'systemMetrics',
+      namespace: 'systemMetrics',
+      method: 'readFile',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'path',
+          wire: 'path',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/readFile:path',
+            schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_parameter_0$schema,
+          },
+        },
+      ],
+      result: {
+        mode: 'strict',
+        typeSymbol: '@deepseek-ai/dsh-host-system-metrics/types#FilePreview',
+        schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_result$schema,
+      },
+      sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":314,"column":9},
     },
     {
       id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/snapshot',

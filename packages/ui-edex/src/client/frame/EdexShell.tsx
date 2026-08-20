@@ -16,6 +16,7 @@ import { useLayoutEffect, useRef } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
 import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
+import { PreviewPane } from '../bottom-panel/PreviewPane.tsx'
 import { RightBar } from '../right-bar/RightBar.tsx'
 import { LeftBar } from '../left-bar/LeftBar.tsx'
 import css from './EdexShell.module.css'
@@ -54,6 +55,8 @@ export interface EdexShellInjected {
   refreshFiles: () => void
   /** Navigate into a directory (or '..' up). */
   navigateFiles: (name: string) => void
+  /** Select a file in the current directory for the preview pane. */
+  selectFile: (name: string) => void
   hooks: {
     panel: ObservableSource<PanelSnapshot>
     network: ObservableSource<NetworkSnapshot>
@@ -66,7 +69,7 @@ export type EdexShellProps = InjectFace<EdexShellInjected>
 
 /** The full eDEX frame: left/right bars + bottom cells around the original UI. */
 export function EdexShell({
-  usePanel, useNetwork, useFiles, refreshFiles, navigateFiles,
+  usePanel, useNetwork, useFiles, refreshFiles, navigateFiles, selectFile,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
 
@@ -98,9 +101,11 @@ export function EdexShell({
         <RightBar useNetwork={useNetwork} />
       </aside>
       <section className={css.bottomLeft}>
-        <BottomPanel useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} />
+        <BottomPanel useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} selectFile={selectFile} />
       </section>
-      <section className={css.bottomRight} aria-hidden="true" />
+      <section className={css.bottomRight}>
+        <PreviewPane useFiles={useFiles} />
+      </section>
       {/* Same faint CRT scanline texture as the panel cells, over the center
           region (the original UI), so the whole canvas reads as one surface. */}
       <section className={css.centerScanline} aria-hidden="true" />
