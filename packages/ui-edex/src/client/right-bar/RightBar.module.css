@@ -40,7 +40,13 @@
   position: relative;
   display: flex;
   justify-content: center;
-  min-height: 160px;
+  min-height: 140px;
+}
+
+/* The world-view section gets tighter padding so the square globe fills
+   more of the bar. */
+.globeSection {
+  padding: 6px 8px;
 }
 
 /* The encom-globe canvas: internal render size fixed at construction, CSS
@@ -91,8 +97,10 @@
   margin-bottom: 6px;
 }
 
-.traffic {
-  display: block;
-  width: 100%;
-  color: var(--edex-green);
+/* The traffic section keeps the leftover bar height below the fixed chart. */
+.trafficSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }

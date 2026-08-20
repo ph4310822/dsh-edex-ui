@@ -32,7 +32,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 20vw;
+  width: 17vw;
   height: 70vh;
   pointer-events: auto;
   display: flex;
@@ -46,7 +46,7 @@
   position: absolute;
   right: 0;
   top: 0;
-  width: 25vw;
+  width: 21.25vw;
   height: 70vh;
   pointer-events: auto;
   display: flex;
@@ -61,7 +61,7 @@
   left: 0;
   bottom: 0;
   width: 35vw;
-  height: 30vh;
+  height: 36vh;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -78,7 +78,7 @@
   left: 35vw;
   right: 0;
   bottom: 0;
-  height: 30vh;
+  height: 36vh;
   pointer-events: auto;
   background: var(--edex-bg);
   border-top: 1px solid var(--edex-border);
@@ -106,10 +106,10 @@
    canvas reads as one surface; click-through. */
 .centerScanline {
   position: absolute;
-  left: 20vw;
-  right: 25vw;
+  left: 17vw;
+  right: 21.25vw;
   top: 0;
-  bottom: 30vh;
+  bottom: 36vh;
   pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,

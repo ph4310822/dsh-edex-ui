@@ -29,9 +29,9 @@ import '../theme/TerminalComposer.module.css'
 import '../theme/TerminalSidebar.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
-export const CENTER_LEFT = '20vw'
-export const CENTER_RIGHT = '25vw'
-export const CENTER_BOTTOM = '30vh'
+export const CENTER_LEFT = '17vw'
+export const CENTER_RIGHT = '21.25vw'
+export const CENTER_BOTTOM = '36vh'
 
 /**
  * Find the layout frame element that owns the overlay layer this shell

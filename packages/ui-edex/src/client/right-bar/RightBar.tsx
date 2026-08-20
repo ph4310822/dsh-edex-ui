@@ -19,9 +19,9 @@ const ENDPOINTS: readonly { label: string; lat: number; lon: number }[] = [
   { label: 'AP-NORTHEAST', lat: 35.68, lon: 139.69 },
 ]
 
-/** The encom-globe rendering size (the canvas is CSS-scaled to the pane). */
+/** The encom-globe rendering size (1:1; the canvas is CSS-scaled to the pane). */
 const GLOBE_WIDTH = 320
-const GLOBE_HEIGHT = 240
+const GLOBE_HEIGHT = 320
 
 /** WebGL world view: an encom-globe instance with the endpoint markers chained by splines. */
 function WorldView() {
@@ -73,31 +73,37 @@ function WorldView() {
   return <div ref={hostRef} className={css.globeHost} data-testid="edex-world-view" />
 }
 
-/** Dual up/down sparkline. */
+/** Dual up/down sparkline with a light grid overlay; fixed 160px height. */
 function TrafficChart({ up, down }: { up: readonly number[]; down: readonly number[] }) {
-  const width = 160
-  const height = 72
+  const w = 316
+  const h = 160
+  const PAD = 2
   const toPoints = (series: readonly number[]): string => {
     const max = Math.max(1, ...series)
     return series
       .map((value, index) => {
-        const x = series.length <= 1 ? 0 : (index / (series.length - 1)) * width
-        const y = height - (value / max) * height
+        const x = series.length <= 1 ? 0 : (index / (series.length - 1)) * w
+        const y = PAD + (1 - value / max) * (h - 2 * PAD)
         return `${x.toFixed(1)},${y.toFixed(1)}`
       })
       .join(' ')
   }
+  const horizontalLines = [0.25, 0.5, 0.75].map(f => PAD + f * (h - 2 * PAD))
+  const verticalLines = Array.from({ length: 7 }, (_, i) => (w / 8) * (i + 1))
   return (
     <svg
-      className={css.traffic}
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      width={w} height={h}
+      viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
       aria-hidden="true"
+      style={{ display: 'block', width: '100%', maxWidth: w, height: h, flex: 'none' }}
     >
-      <polyline points={toPoints(down)} fill="none" stroke="currentColor" strokeWidth="1" opacity="0.9" />
-      <polyline points={toPoints(up)} fill="none" stroke="#e0c05a" strokeWidth="1" opacity="0.9" />
+      <g stroke="rgba(70, 242, 130, 0.18)" strokeWidth="1">
+        {horizontalLines.map(y => <line key={`h${y}`} x1="0" y1={y} x2={w} y2={y} />)}
+        {verticalLines.map(x => <line key={`v${x}`} x1={x} y1="0" x2={x} y2={h} />)}
+      </g>
+      <polyline points={toPoints(down)} fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.9" />
+      <polyline points={toPoints(up)} fill="none" stroke="#e0c05a" strokeWidth="1.5" opacity="0.9" />
     </svg>
   )
 }
@@ -116,7 +122,7 @@ export function RightBar({ useNetwork }: { useNetwork: SnapshotSelectorHook<Netw
         <div className={css.specLine}><span className={css.key}>PING</span><span>{network.network.pingMs === null ? '—' : `${network.network.pingMs.toFixed(0)}ms`}</span></div>
       </section>
 
-      <section className={css.section}>
+      <section className={`${css.section} ${css.globeSection}`}>
         <div className={css.title}>WORLD VIEW</div>
         <div className={css.globePane}>
           <WorldView />
@@ -131,7 +137,7 @@ export function RightBar({ useNetwork }: { useNetwork: SnapshotSelectorHook<Netw
         </div>
       </section>
 
-      <section className={css.section}>
+      <section className={`${css.section} ${css.trafficSection}`}>
         <div className={css.title}>TRAFFIC</div>
         <div className={css.trafficHeader}>
           <span><span className={css.key}>UP</span> {network.upMbs.toFixed(2)} MB/s</span>
