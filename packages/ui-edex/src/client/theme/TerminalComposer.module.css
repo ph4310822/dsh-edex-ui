@@ -49,11 +49,16 @@
   min-width: 0;
 }
 
-/* Font: deliberately NOT overridden — the input text keeps the stock
+/* Input text size: pinned to 14px to match the terminal path prompt, so the
+   whole line reads as one terminal line (`~/<folder> [input]`). The stock
    InputBar stack ('DshChipCell' first for the U+FFFC placeholder advance,
-   then the app font) and inherits the conversation body size, so the input
-   reads exactly like the rest of the UI. Only the color and caret are
-   terminal-skin. */
+   then the app font) stays; only the size is overridden, identically on all
+   three text layers so the caret and glyphs keep sharing metrics. */
+:global(textarea[data-phase][data-phase]),
+:global([data-input-backdrop][data-input-backdrop]),
+:global([data-input-mirror][data-input-mirror]) {
+  font-size: 14px;
+}
 
 /* Only the backdrop layer gets the visible terminal-green glyphs; the
    textarea and mirror keep their transparent color. */

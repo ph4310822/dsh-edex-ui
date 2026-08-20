@@ -14,7 +14,7 @@
  */
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
-import type { WorkspaceListState } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionListState, WorkspaceListState } from '@deepseek-ai/dsh-client-runtime/client'
 import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
 import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
 import { PreviewPane } from '../bottom-panel/PreviewPane.tsx'
@@ -71,6 +71,8 @@ export interface EdexShellInjected {
     files: ObservableSource<FilesState>
     /** Workspace list snapshot — feeds the terminal path prompt at the input's left edge. */
     workspaces: ObservableSource<WorkspaceListState>
+    /** Session list snapshot — the prompt follows the ACTIVE conversation's workspace. */
+    sessions: ObservableSource<SessionListState>
   }
 }
 
@@ -79,13 +81,17 @@ export type EdexShellProps = InjectFace<EdexShellInjected>
 
 /** The full eDEX frame: left/right bars + bottom cells around the original UI. */
 export function EdexShell({
-  usePanel, useNetwork, useFiles, useWorkspaces, refreshFiles, navigateFiles, selectFile,
+  usePanel, useNetwork, useFiles, useWorkspaces, useSessions, refreshFiles, navigateFiles, selectFile,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
 
-  // The active workspace's folder name — the terminal path prompt's directory.
+  // The ACTIVE conversation's workspace folder — the terminal path prompt's
+  // directory (same session→workspace mapping as the DIR panel).
+  const sessionId = useSessions(s => s.current)
   const workspaces = useWorkspaces(s => s)
-  const current = workspaces.items.find(workspace => workspace.workspaceId === workspaces.recentWorkspaceId) ?? workspaces.items[0]
+  const current = sessionId === undefined
+    ? undefined
+    : workspaces.items.find(workspace => workspace.sessionIds.includes(sessionId))
   const folder = current === undefined ? '' : basename(current.path)
   const folderRef = useRef(folder)
   folderRef.current = folder
@@ -144,7 +150,7 @@ export function EdexShell({
     return () => { observer.disconnect() }
   }, [])
 
-  // Keep every live path prompt in step with the active workspace.
+  // Keep every live path prompt in step with the active conversation's workspace.
   useEffect(() => {
     for (const el of document.querySelectorAll('[data-edex-path]')) {
       const path = el as HTMLElement

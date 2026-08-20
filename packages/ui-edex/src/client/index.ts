@@ -24,8 +24,8 @@ import { FilesController } from './shared/files.ts'
 import { EdexPoller } from './shared/monitor.ts'
 import type { SystemMetricsRemote } from './shared/types.ts'
 
-/** Required services: the slot registry, the theme service, the workspaces runtime, and the Remote carrier (namespace mounted in apply). */
-export const inject = ['slots', 'remote', 'theme', 'workspaces']
+/** Required services: the slot registry, the theme service, the sessions and workspaces runtimes, and the Remote carrier (namespace mounted in apply). */
+export const inject = ['slots', 'remote', 'theme', 'sessions', 'workspaces']
 
 /**
  * Green-on-black alias-token layer for the ORIGINAL web UI. Applied through
@@ -88,24 +88,28 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
 
   const files = new FilesController(metrics)
 
-  // The DIR panel follows the active workspace: whenever the most recently
-  // active workspace changes, the filesystem browser navigates to that
-  // workspace's folder (navigating away clears any file preview).
+  // The DIR panel follows the ACTIVE CONVERSATION's workspace: whenever the
+  // current session changes, the filesystem browser navigates to that
+  // conversation's workspace folder (navigating away clears any file
+  // preview). Sessions with no workspace membership keep the last directory.
   ctx.effect(() => {
     let lastPath: string | undefined
     const sync = (): void => {
-      const state = ctx.workspaces.list.getSnapshot()
-      const current = state.items.find(workspace => workspace.workspaceId === state.recentWorkspaceId)
-      const path = current?.path
+      const sessionId = ctx.sessions.list.getSnapshot().current
+      const workspace = sessionId === undefined
+        ? undefined
+        : ctx.workspaces.list.getSnapshot().items.find(w => w.sessionIds.includes(sessionId))
+      const path = workspace?.path
       if (path !== undefined && path !== lastPath) {
         lastPath = path
         void files.list(path)
       }
     }
-    const off = ctx.workspaces.list.subscribe(sync)
+    const offSession = ctx.sessions.list.subscribe(sync)
+    const offWorkspaces = ctx.workspaces.list.subscribe(sync)
     sync()
-    return () => { off() }
-  }, 'ui-edex: workspace-follow dir navigation')
+    return () => { offSession(); offWorkspaces() }
+  }, 'ui-edex: session-workspace dir navigation')
 
   ctx.effect(
     () => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
@@ -122,6 +126,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
           files: files.files,
           // Feeds the terminal path prompt at the composer input's left edge.
           workspaces: ctx.workspaces.list,
+          sessions: ctx.sessions.list,
         },
       }),
     }, EdexShell)),
