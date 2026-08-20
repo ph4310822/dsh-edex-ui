@@ -23,21 +23,17 @@
   border-color: var(--edex-green);
 }
 
-/* Terminal prompt prefix on the expanded button label. */
-:global([data-slot="sidebar"][data-slot="sidebar"] > div > button::before) {
-  content: '> ';
-  color: var(--edex-dim);
-}
-
-/* The workspace/session browsing region: mono green tree. */
+/* The workspace/session browsing region: green tree in the app's own font
+   (no mono override, so it reads like the rest of the sidebar). */
 :global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"]) {
-  font-family: var(--edex-font);
   color: var(--edex-green);
 }
 
+/* Workspace/session tree items at a compact terminal density (12px). */
 :global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]) {
   color: var(--edex-green);
   border-radius: 0;
+  font-size: 12px;
 }
 
 :global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]:hover) {

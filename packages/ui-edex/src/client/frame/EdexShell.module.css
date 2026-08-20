@@ -118,3 +118,22 @@
     rgba(70, 242, 130, 0.05) 3px
   );
 }
+
+/* Classic terminal prompt above the composer input: `$ <cwd>`. Injected by
+   EdexShell before the draft scrollport; left padding aligns it with the
+   textarea's own 16px text inset. */
+.composerPrompt {
+  padding: 2px 12px 0 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--edex-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.composerPrompt::before {
+  content: '$ ';
+  color: var(--edex-green);
+}

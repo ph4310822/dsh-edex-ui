@@ -14,15 +14,19 @@ import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 // override-layer vocabulary into this compilation.
 import type { ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+// Type-only: pulls the runtime's Context merge (ctx.workspaces) and the
+// workspaces snapshot vocabulary into this compilation.
+import type {} from '@deepseek-ai/dsh-client-runtime/client'
 // The generated Host Remote contribution; mounted in apply (inlined at build).
 import systemMetricsRemote from '@deepseek-ai/dsh-host-system-metrics/remote'
 import { EdexShell, type EdexShellInjected } from './frame/EdexShell.tsx'
+import { FolderIndicator } from './frame/FolderIndicator.tsx'
 import { FilesController } from './shared/files.ts'
 import { EdexPoller } from './shared/monitor.ts'
 import type { SystemMetricsRemote } from './shared/types.ts'
 
-/** Required services: the slot registry, the theme service, and the Remote carrier (namespace mounted in apply). */
-export const inject = ['slots', 'remote', 'theme']
+/** Required services: the slot registry, the theme service, the workspaces runtime, and the Remote carrier (namespace mounted in apply). */
+export const inject = ['slots', 'remote', 'theme', 'workspaces']
 
 /**
  * Green-on-black alias-token layer for the ORIGINAL web UI. Applied through
@@ -84,6 +88,35 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   }, 'ui-edex: overview poller')
 
   const files = new FilesController(metrics)
+
+  // The DIR panel follows the active workspace: whenever the most recently
+  // active workspace changes, the filesystem browser navigates to that
+  // workspace's folder (navigating away clears any file preview).
+  ctx.effect(() => {
+    let lastPath: string | undefined
+    const sync = (): void => {
+      const state = ctx.workspaces.list.getSnapshot()
+      const current = state.items.find(workspace => workspace.workspaceId === state.recentWorkspaceId)
+      const path = current?.path
+      if (path !== undefined && path !== lastPath) {
+        lastPath = path
+        void files.list(path)
+      }
+    }
+    const off = ctx.workspaces.list.subscribe(sync)
+    sync()
+    return () => { off() }
+  }, 'ui-edex: workspace-follow dir navigation')
+
+  // Classic-terminal folder prompt at the composer row's left edge.
+  ctx.effect(
+    () => ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
+      name: 'conversation.input.left',
+      id: 'edex-folder-indicator',
+      order: 0,
+    }, FolderIndicator)),
+    'ui-edex: folder indicator registration',
+  )
 
   ctx.effect(
     () => ctx.slots.inject('shell.overlay', () => ctx.slots.register({

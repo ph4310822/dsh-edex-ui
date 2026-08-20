@@ -12,7 +12,7 @@
  * pins it to the center region with inline styles. Every change is restored
  * on dispose, so unloading this plugin restores the stock layout exactly.
  */
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
 import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
@@ -72,6 +72,10 @@ export function EdexShell({
   usePanel, useNetwork, useFiles, refreshFiles, navigateFiles, selectFile,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
+  // The files browser's current directory — the terminal prompt's working dir.
+  const files = useFiles(s => s)
+  const pathRef = useRef(files.path)
+  pathRef.current = files.path
 
   useLayoutEffect(() => {
     const shell = shellRef.current
@@ -91,6 +95,44 @@ export function EdexShell({
       else frame.setAttribute('style', saved)
     }
   }, [])
+
+  // Classic terminal prompt: a `$ <cwd>` line above the composer input. The
+  // composer card mounts lazily (per conversation), so a MutationObserver
+  // injects the prompt element in front of the draft scrollport once per card.
+  useEffect(() => {
+    const injected = new WeakSet<Element>()
+    const syncPrompt = (prompt: HTMLElement): void => {
+      const path = pathRef.current
+      prompt.textContent = path
+      prompt.style.display = path === '' ? 'none' : 'inline-block'
+    }
+    const inject = (card: Element): void => {
+      if (injected.has(card)) return
+      injected.add(card)
+      const scroll = card.querySelector('[data-input-scroll]')
+      if (scroll === null) return
+      const prompt = document.createElement('span')
+      prompt.dataset.edexPrompt = ''
+      prompt.className = css.composerPrompt
+      syncPrompt(prompt)
+      card.insertBefore(prompt, scroll)
+    }
+    const scan = (): void => {
+      for (const card of document.querySelectorAll('[data-composer-card]')) inject(card)
+    }
+    scan()
+    const observer = new MutationObserver(scan)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => { observer.disconnect() }
+  }, [])
+
+  // Keep every live prompt's working dir in step with the files browser.
+  useEffect(() => {
+    for (const prompt of document.querySelectorAll('[data-edex-prompt]')) {
+      prompt.textContent = files.path
+      prompt.style.display = files.path === '' ? 'none' : 'inline-block'
+    }
+  }, [files.path])
 
   return (
     <div ref={shellRef} className={css.shell} data-edex-shell="" data-testid="edex-shell">

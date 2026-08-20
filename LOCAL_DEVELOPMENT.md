@@ -241,8 +241,9 @@ pnpm dsh plugin --profile web add file:/absolute/path/to/your-plugin/packages/bu
 # 3. verify the layer composes without booting
 pnpm dsh --profile web --dump-config   # look for "# == <your-bundle>"
 
-# 4. boot on a non-default port (default is 3080)
-pnpm dsh web --port 3081               # open http://127.0.0.1:3081, hard-refresh (⌘⇧R)
+# 4. boot on a non-default port (default is 3080) — use a SCRATCH PORT so the
+#    test instance never clashes with a server you already run on 3080
+pnpm dsh web --port 3083               # open http://127.0.0.1:3083, hard-refresh (⌘⇧R)
 ```
 
 Why `file:`: a bare path is recorded as pnpm `link:`, which **skips installing
@@ -269,6 +270,11 @@ Verification:
   A validation error past the route check means the endpoint is registered; a
   plain `not found` means it is not.
 
+> **Port hygiene.** If the boot dies with `listen EADDRINUSE`, a previous run's
+> `node` child is still holding the port (killing the `pnpm` wrapper does not
+> always take the child down). Check `lsof -iTCP:<port> -sTCP:LISTEN` and kill
+> the actual node pid before booting again.
+
 ---
 
 ## 6. Iteration loop
@@ -278,16 +284,76 @@ Profile installs are **copies**, not symlinks. After editing sources:
 ```sh
 cd /path/to/your-plugin && pnpm build
 cd ~/.dsh/profiles/<name> && pnpm install   # re-copies the rebuilt lib/ from the checkout
-# then restart: cd /path/to/deepseek-harness && pnpm dsh web --port 3081
+# then restart: cd /path/to/deepseek-harness && pnpm dsh web --port 3083
 ```
 
 A stale profile copy is the usual cause of `loaded without registering`
 (loader-id mismatch) or a missing GUI — always refresh the profile after a
-rebuild.
+rebuild. Restarting the server after the refresh matters too: the page caches
+client bundles by boot-time `__DSH_BOOT__` rev hashes, so an old server keeps
+serving the old bundle even though the files on disk changed.
 
 ---
 
-## 7. Publish + clean-room check
+## 7. GUI smoke-testing on a scratch port (Playwright)
+
+A booting server is not a working GUI. Client-side failures — a bundle that
+throws while loading, a `/remote` contribution the page cannot resolve, a
+stale profile copy — pass `curl` checks and only surface in the browser. The
+reliable loop is to run the same installed profile on a **scratch port** and
+drive it with the harness's own Playwright + Chromium (the browsers are
+already in `~/Library/Caches/ms-playwright`).
+
+```sh
+# 1. boot the installed profile on a scratch port (same profile, different port)
+cd /path/to/deepseek-harness
+pnpm dsh web --port 3083                # keep your 3080 server untouched
+
+# 2. probe the GUI with Playwright (this repo ships the scripts)
+cd /path/to/your-plugin
+node scripts/edex-probe-preview.mjs     # or scripts/edex-probe.mjs
+```
+
+The probe is an ESM script kept in `scripts/`. It:
+
+- Resolves Playwright by an absolute path into the harness pnpm store so it
+  runs from anywhere:
+  `import { chromium } from '<harness>/node_modules/.pnpm/playwright@<version>/node_modules/playwright/index.mjs'`.
+- **Collects `console` errors and `pageerror`** — the check that catches real
+  crashes; curl cannot see them. A broken bundle reports e.g.
+  `client-modules: require("@deepseek-ai/<pkg>/remote") missed the module table`.
+- Asserts on the plugin's own stable DOM hooks — `[data-edex-shell]`, the
+  `[data-slot="..."]` slot hosts, `data-testid` surfaces — never hashed
+  classes.
+- **Interacts**: clicks a file entry and asserts the preview pane updates, an
+  end-to-end Host Remote round trip through the gateway.
+- Saves `probe-shot.png` for a visual check.
+
+Iteration on the scratch port:
+
+```sh
+cd /path/to/your-plugin && pnpm build
+cd ~/.dsh/profiles/web && pnpm install      # refresh the profile COPY
+# then restart the scratch server so the page re-boots with fresh revs
+```
+
+Two traps seen in practice:
+
+1. **A missing own-package symlink silently externalizes the `/remote`
+   import.** If `node_modules/@deepseek-ai/<your-host-package>` is missing,
+   tsdown cannot resolve `<pkg>/remote` and emits `require("<pkg>/remote")`
+   instead of inlining the contribution — the build still succeeds and the
+   server boots, but the page dies with `missed the module table`. Fix:
+   run `scripts/link-harness.sh` (it links your own `packages/*` first, then
+   the harness's), rebuild, and confirm with the probe that the bundle has 0
+   external `require("@deepseek-ai/...")` calls and the shell renders.
+2. **Zombie servers on the scratch port.** Killing the `pnpm` wrapper can
+   leave the child `node` holding the port; the next boot dies with
+   `listen EADDRINUSE`. See the port-hygiene note in section 5.
+
+---
+
+## 8. Publish + clean-room check
 
 - `lib/` is the npm payload: **build immediately before publishing** (a stale
   client bundle id or typert `package` field only fails at boot, not at
@@ -321,6 +387,9 @@ rebuild.
 | RPC `HTTP 404` for `/api/<ns>/<method>` | typert host face not registered (`package` mismatch) | repoint/regenerate `lib/typert.host.js` so `TYPERT.package` = npm name |
 | `loaded without registering "<id>"` | stale profile copy / wrong bundle id | rebuild + `pnpm install` in profile; bundle id must equal the published name |
 | profile install "installs" but deps missing | bare path recorded as `link:` | use the `file:` prefix |
+| page: `require("@deepseek-ai/<pkg>/remote") missed the module table` | own-package `node_modules` symlink missing → tsdown externalizes the `/remote` import instead of inlining it | `scripts/link-harness.sh` (links your own `packages/*` first), rebuild, refresh the profile copy |
+| boot: `listen EADDRINUSE` on the scratch port | zombie `node` from a previous run still holds the port | `lsof -iTCP:<port> -sTCP:LISTEN`, kill the node pid, boot again |
+| GUI still old after rebuild | page caches bundles by boot-time `__DSH_BOOT__` revs | restart the server (after refreshing the profile copy) |
 
 ## Reference implementation
 

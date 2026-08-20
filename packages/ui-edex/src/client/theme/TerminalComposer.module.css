@@ -9,9 +9,10 @@
    Text-layer contract: the backdrop carries the VISIBLE glyphs; the textarea
    and the mirror must stay transparent (only the caret is the textarea's, the
    mirror is the caret-reveal ruler). All three MUST share font metrics or the
-   caret drifts off the glyphs — the mono stack below is applied to all three
-   identically, with the chip cell font first so placeholder advances stay
-   exact. */
+   caret drifts off the glyphs — the stock InputBar rule already applies the
+   same stack (chip cell first, then the app font) and the same inherited size
+   to all three, so dropping the mono override below keeps them aligned while
+   the input reads in the app's own font. */
 
 /* The terminal palette must resolve inside the composer too: it lives outside
    the shell frame, so define the vars on body (the plugin's style tag is
@@ -35,13 +36,11 @@
   background: transparent;
 }
 
-/* Shared mono metrics on all three text layers (chip cell first so the
-   U+FFFC placeholder advance stays exact). */
-:global(textarea[data-phase][data-phase]),
-:global([data-input-backdrop][data-input-backdrop]),
-:global([data-input-mirror][data-input-mirror]) {
-  font-family: 'DshChipCell', var(--edex-font);
-}
+/* Font: deliberately NOT overridden — the input text keeps the stock
+   InputBar stack ('DshChipCell' first for the U+FFFC placeholder advance,
+   then the app font) and inherits the conversation body size, so the input
+   reads exactly like the rest of the UI. Only the color and caret are
+   terminal-skin. */
 
 /* Only the backdrop layer gets the visible terminal-green glyphs; the
    textarea and mirror keep their transparent color. */
