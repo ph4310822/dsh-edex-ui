@@ -19,6 +19,26 @@ fi
 mkdir -p "$ROOT/node_modules/@deepseek-ai"
 
 linked=0
+
+# Link the plugin's OWN @deepseek-ai packages first (they ship the generated
+# Typert artifacts this checkout must build against — the harness copies
+# cannot replace them). A name found under this repo's packages/ wins.
+for manifest in "$ROOT"/packages/*/*/package.json; do
+  [ -f "$manifest" ] || continue
+  name="$(node -e "process.stdout.write(require('$manifest').name ?? '')" 2>/dev/null || true)"
+  case "$name" in
+    @deepseek-ai/*)
+      link="$ROOT/node_modules/@deepseek-ai/${name#@deepseek-ai/}"
+      if [ ! -e "$link" ]; then
+        ln -s "$(dirname "$manifest")" "$link"
+        linked=$((linked + 1))
+      fi
+      ;;
+  esac
+done
+
+# Then every remaining @deepseek-ai/* workspace package from the harness, so
+# tsc and tsdown can resolve harness types at build time.
 for manifest in "$HARNESS"/packages/*/*/package.json; do
   [ -f "$manifest" ] || continue
   name="$(node -e "process.stdout.write(require('$manifest').name ?? '')" 2>/dev/null || true)"
