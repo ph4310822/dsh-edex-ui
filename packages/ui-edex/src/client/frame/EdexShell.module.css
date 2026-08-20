@@ -119,21 +119,20 @@
   );
 }
 
-/* Classic terminal prompt above the composer input: `$ <cwd>`. Injected by
-   EdexShell before the draft scrollport; left padding aligns it with the
-   textarea's own 16px text inset. */
-.composerPrompt {
-  padding: 2px 12px 0 16px;
+/* Terminal path prompt at the LEFT edge of the composer input: `~/<folder>`
+   on the same line as the textarea (classic `$ cwd` style). Injected by
+   EdexShell inside the draft scrollport, before the text stack;
+   TerminalComposer.module.css makes the scrollport a flex row so this element
+   (flex: none) sits beside the input (flex: 1). Metrics align it with the
+   textarea's first line: the input text starts at 16px left / 4px top padding,
+   so the prompt mirrors that inset. */
+.pathPrompt {
+  flex: none;
+  padding: 4px 0 0 16px;
   font-size: 14px;
-  line-height: 1.4;
-  color: var(--edex-dim);
+  line-height: 24px;
+  color: var(--edex-amber);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.composerPrompt::before {
-  content: '$ ';
-  color: var(--edex-green);
+  user-select: none;
+  pointer-events: none;
 }

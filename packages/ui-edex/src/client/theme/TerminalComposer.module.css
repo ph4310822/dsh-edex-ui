@@ -31,9 +31,22 @@
   box-shadow: none;
 }
 
-/* Keep the draft scrollport transparent as well. */
+/* The draft scrollport becomes the terminal line: a flex row with the
+   injected `~/<folder>` path prompt (flex: none) at the left and the text
+   stack (flex: 1) filling the rest — `/directory [user input]`. The prompt
+   scrolls with the input, like a real terminal. */
 :global([data-input-scroll][data-input-scroll]) {
+  display: flex;
+  align-items: flex-start;
   background: transparent;
+}
+
+/* The text-stack wrapper (.grow, the scrollport's other direct child) takes
+   the remaining width after the prompt; without this it sizes to the draft's
+   intrinsic text width and overflows the card. */
+:global([data-input-scroll][data-input-scroll] > :not([data-edex-path])) {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Font: deliberately NOT overridden — the input text keeps the stock

@@ -14,6 +14,7 @@
  */
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
+import type { WorkspaceListState } from '@deepseek-ai/dsh-client-runtime/client'
 import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
 import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
 import { PreviewPane } from '../bottom-panel/PreviewPane.tsx'
@@ -49,7 +50,14 @@ function findLayoutFrame(shellRoot: HTMLElement): HTMLElement | null {
   return null
 }
 
-/** The shell entry's inject face: panel actions plus the three hook seats. */
+/** The last path segment. */
+function basename(path: string): string {
+  const trimmed = path.replace(/\/+$/, '')
+  const index = trimmed.lastIndexOf('/')
+  return index >= 0 ? trimmed.slice(index + 1) : trimmed
+}
+
+/** The shell entry's inject face: panel actions plus the four hook seats. */
 export interface EdexShellInjected {
   /** Fetch storage + the current directory listing. */
   refreshFiles: () => void
@@ -61,6 +69,8 @@ export interface EdexShellInjected {
     panel: ObservableSource<PanelSnapshot>
     network: ObservableSource<NetworkSnapshot>
     files: ObservableSource<FilesState>
+    /** Workspace list snapshot — feeds the terminal path prompt at the input's left edge. */
+    workspaces: ObservableSource<WorkspaceListState>
   }
 }
 
@@ -69,13 +79,16 @@ export type EdexShellProps = InjectFace<EdexShellInjected>
 
 /** The full eDEX frame: left/right bars + bottom cells around the original UI. */
 export function EdexShell({
-  usePanel, useNetwork, useFiles, refreshFiles, navigateFiles, selectFile,
+  usePanel, useNetwork, useFiles, useWorkspaces, refreshFiles, navigateFiles, selectFile,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
-  // The files browser's current directory — the terminal prompt's working dir.
-  const files = useFiles(s => s)
-  const pathRef = useRef(files.path)
-  pathRef.current = files.path
+
+  // The active workspace's folder name — the terminal path prompt's directory.
+  const workspaces = useWorkspaces(s => s)
+  const current = workspaces.items.find(workspace => workspace.workspaceId === workspaces.recentWorkspaceId) ?? workspaces.items[0]
+  const folder = current === undefined ? '' : basename(current.path)
+  const folderRef = useRef(folder)
+  folderRef.current = folder
 
   useLayoutEffect(() => {
     const shell = shellRef.current
@@ -96,26 +109,31 @@ export function EdexShell({
     }
   }, [])
 
-  // Classic terminal prompt: a `$ <cwd>` line above the composer input. The
-  // composer card mounts lazily (per conversation), so a MutationObserver
-  // injects the prompt element in front of the draft scrollport once per card.
+  // Terminal path prompt at the LEFT edge of the composer input, on the same
+  // line as the textarea (`~/<workspace> [input]`, classic-terminal style).
+  // The composer card mounts lazily (per conversation), so a MutationObserver
+  // injects the path element inside the draft scrollport, before the text
+  // stack, once per card; TerminalComposer.module.css lays the scrollport out
+  // as a flex row with the path (flex:none) beside the input (flex:1).
   useEffect(() => {
     const injected = new WeakSet<Element>()
-    const syncPrompt = (prompt: HTMLElement): void => {
-      const path = pathRef.current
-      prompt.textContent = path
-      prompt.style.display = path === '' ? 'none' : 'inline-block'
+    const syncPath = (el: HTMLElement): void => {
+      const name = folderRef.current
+      el.textContent = name === '' ? '' : `~/${name}`
+      el.style.display = name === '' ? 'none' : 'inline-block'
     }
     const inject = (card: Element): void => {
       if (injected.has(card)) return
       injected.add(card)
       const scroll = card.querySelector('[data-input-scroll]')
       if (scroll === null) return
-      const prompt = document.createElement('span')
-      prompt.dataset.edexPrompt = ''
-      prompt.className = css.composerPrompt
-      syncPrompt(prompt)
-      card.insertBefore(prompt, scroll)
+      const grow = scroll.firstElementChild // .grow — the text-stack wrapper
+      if (grow === null) return
+      const path = document.createElement('span')
+      path.dataset.edexPath = ''
+      path.className = css.pathPrompt
+      syncPath(path)
+      scroll.insertBefore(path, grow)
     }
     const scan = (): void => {
       for (const card of document.querySelectorAll('[data-composer-card]')) inject(card)
@@ -126,13 +144,14 @@ export function EdexShell({
     return () => { observer.disconnect() }
   }, [])
 
-  // Keep every live prompt's working dir in step with the files browser.
+  // Keep every live path prompt in step with the active workspace.
   useEffect(() => {
-    for (const prompt of document.querySelectorAll('[data-edex-prompt]')) {
-      prompt.textContent = files.path
-      prompt.style.display = files.path === '' ? 'none' : 'inline-block'
+    for (const el of document.querySelectorAll('[data-edex-path]')) {
+      const path = el as HTMLElement
+      path.textContent = folder === '' ? '' : `~/${folder}`
+      path.style.display = folder === '' ? 'none' : 'inline-block'
     }
-  }, [files.path])
+  }, [folder])
 
   return (
     <div ref={shellRef} className={css.shell} data-edex-shell="" data-testid="edex-shell">

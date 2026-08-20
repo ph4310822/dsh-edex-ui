@@ -20,7 +20,6 @@ import type {} from '@deepseek-ai/dsh-client-runtime/client'
 // The generated Host Remote contribution; mounted in apply (inlined at build).
 import systemMetricsRemote from '@deepseek-ai/dsh-host-system-metrics/remote'
 import { EdexShell, type EdexShellInjected } from './frame/EdexShell.tsx'
-import { FolderIndicator } from './frame/FolderIndicator.tsx'
 import { FilesController } from './shared/files.ts'
 import { EdexPoller } from './shared/monitor.ts'
 import type { SystemMetricsRemote } from './shared/types.ts'
@@ -108,16 +107,6 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
     return () => { off() }
   }, 'ui-edex: workspace-follow dir navigation')
 
-  // Classic-terminal folder prompt at the composer row's left edge.
-  ctx.effect(
-    () => ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
-      name: 'conversation.input.left',
-      id: 'edex-folder-indicator',
-      order: 0,
-    }, FolderIndicator)),
-    'ui-edex: folder indicator registration',
-  )
-
   ctx.effect(
     () => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
       name: 'shell.overlay',
@@ -131,6 +120,8 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
           panel: poller.panel,
           network: poller.network,
           files: files.files,
+          // Feeds the terminal path prompt at the composer input's left edge.
+          workspaces: ctx.workspaces.list,
         },
       }),
     }, EdexShell)),

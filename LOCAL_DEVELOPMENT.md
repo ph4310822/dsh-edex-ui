@@ -293,6 +293,21 @@ rebuild. Restarting the server after the refresh matters too: the page caches
 client bundles by boot-time `__DSH_BOOT__` rev hashes, so an old server keeps
 serving the old bundle even though the files on disk changed.
 
+> **`pnpm install` can silently skip a rebuilt `file:` dependency.** pnpm
+> considers a `file:` dep up to date from the lockfile's recorded state, so
+> after a rebuild the plain install prints "Already up to date" and leaves the
+> OLD bundle in the profile. Verify the copy actually changed (or byte-compare
+> it against the checkout), and if it did not, force a re-copy:
+>
+> ```sh
+> rm -rf node_modules/@deepseek-ai/<your-bundle> node_modules/@deepseek-ai/<your-ui> node_modules/@deepseek-ai/<your-host>
+> pnpm install
+> ```
+>
+> Removing the installed dirs makes pnpm re-copy every `file:` dep from the
+> checkout; re-running plain `pnpm install` on a dir that was already refreshed
+> is a no-op, so the rm is the reliable refresh.
+
 ---
 
 ## 7. GUI smoke-testing on a scratch port (Playwright)
@@ -353,7 +368,83 @@ Two traps seen in practice:
 
 ---
 
-## 8. Publish + clean-room check
+## 8. Deploying a rebuild to a running GUI (two-instance workflow)
+
+When you already have a server running on port 3080 (your main GUI) and need to
+test a rebuild without interrupting it, the workflow is:
+
+1. **Rebuild the plugin source** (the checkout `lib/`):
+   ```sh
+   cd /path/to/your-plugin && pnpm build
+   ```
+
+2. **Clone the current profile into a dedicated scratch profile** so the scratch
+   instance has its own copy of the plugin (the main profile stays untouched for
+   now):
+   ```sh
+   cp -R ~/.dsh/profiles/web ~/.dsh/profiles/web-edex
+   ```
+
+3. **Refresh the rebuilt bundle into the clone** — `pnpm install` re-copies
+   `file:` dependencies from the checkout. Plain `pnpm install` can skip a
+   rebuilt `file:` dep ("Already up to date" with a stale copy), so remove the
+   installed plugin dirs first to force a fresh copy (see the note in
+   section 6):
+   ```sh
+   cd ~/.dsh/profiles/web-edex
+   rm -rf node_modules/@deepseek-ai/dsh-edex-ui \
+          node_modules/@deepseek-ai/dsh-client-ui-edex \
+          node_modules/@deepseek-ai/dsh-client-ui-theme-terminal
+   pnpm install
+   ```
+
+4. **Boot the scratch server** on a dedicated port (http://127.0.0.1:3083):
+   ```sh
+   cd /path/to/deepseek-harness && pnpm dsh --profile web-edex --port 3083
+   ```
+   Verify: `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3083/` → `200`.
+
+5. **Probe the scratch GUI** with Playwright to confirm the plugin is active and
+   the changes look correct:
+   ```sh
+   cd /path/to/your-plugin && node scripts/edex-probe-prompt.mjs
+   node scripts/edex-probe-font.mjs
+   ```
+   Assertions: `[data-edex-shell]` present, no console/page errors, font
+   properties match the expected app stack.
+
+6. **Remove the plugin from the main profile** (the live 3080 server is
+   unaffected — bundles are in memory; only the next restart reflects the
+   change):
+   ```sh
+   cd /path/to/deepseek-harness
+   pnpm dsh plugin --profile web remove @deepseek-ai/dsh-edex-ui
+   ```
+
+7. **Restart the main 3080 server** (do this after the scratch server is
+   verified — the main GUI goes down during the restart):
+   ```sh
+   cd /path/to/deepseek-harness && pnpm dsh web --port 3080
+   ```
+   After the restart, the plugin is gone and the stock UI is restored.
+
+> **Why clone the profile?** A new profile name auto-initializes to only
+> `@deepseek-ai/dsh-base` (not a web-app profile), so it must be cloned from an
+> existing `web` profile. Cloning also preserves the same set of installed
+> bundles (other plugins, wallet, etc.) so the scratch instance is a faithful
+> copy of the production profile.
+>
+> **Plugin removal only affects restarts.** The live 3080 process holds its
+> bundles in memory, so `pnpm dsh plugin ... remove` is safe to run while the
+> server is running. The plugin vanishes on the next boot.
+>
+> **The scratch profile persists.** Future iteration goes through the standard
+> loop (rebuild → `pnpm install` in `web-edex` → restart 3083) without touching
+> the main profile again.
+
+---
+
+## 9. Publish + clean-room check
 
 - `lib/` is the npm payload: **build immediately before publishing** (a stale
   client bundle id or typert `package` field only fails at boot, not at
