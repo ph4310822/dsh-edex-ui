@@ -1,14 +1,14 @@
 {
-  "name": "@deepseek-ai/dsh-terminal-shell",
-  "description": "Terminal-shell profile layer: disables the default web surface and inserts the CRT terminal shell plugin plus its two Host Remotes",
-  "version": "0.1.0-rc.5",
+  "name": "@deepseek-ai/dsh-edex-ui",
+  "description": "eDEX-UI style shell over the web surface: system telemetry left bar, network/world-view right bar, filesystem browser bottom-left, original UI centered",
+  "version": "0.1.0-rc.7",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/bundle/terminal-shell"
+    "directory": "packages/bundle/edex-ui"
   },
   "type": "module",
   "dsh": {
@@ -20,9 +20,9 @@
     "cordis.patch.yml"
   ],
   "dependencies": {
-    "@deepseek-ai/dsh-client-ui-terminal": "file:../client",
-    "@deepseek-ai/dsh-host-system-metrics": "file:../host/system-metrics",
-    "@deepseek-ai/dsh-host-terminal-bridge": "file:../host/terminal-bridge"
+    "@deepseek-ai/dsh-client-ui-edex": "file:../ui-edex",
+    "@deepseek-ai/dsh-client-ui-theme-terminal": "file:../ui-theme-terminal",
+    "@deepseek-ai/dsh-host-system-metrics": "file:../host/system-metrics"
   },
   "license": "MIT"
 }

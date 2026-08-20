@@ -1,0 +1,45 @@
+/* Terminal-style sidebar overrides: the New Session button and the
+   workspace/session tree. The slot hosts carry stable data-slot hooks
+   (data-slot="sidebar" wraps the sidebar root; data-slot="sidebar.workspaces"
+   wraps the browser), and the workspace rows expose role="tree"/"treeitem"
+   semantics — no ui-sidebar/ui-workspace changes needed. Attributes are
+   doubled so these rules win the tie against the app's own stylesheets
+   regardless of injection order. */
+
+/* The New Session button: the only direct <button> child of the sidebar
+   root (the logo/toggle buttons live inside the logo row). A flat square
+   terminal control: green border, mono glyphs. */
+:global([data-slot="sidebar"][data-slot="sidebar"] > div > button) {
+  border-radius: 0;
+  background: transparent;
+  border: 1px solid var(--edex-border);
+  color: var(--edex-green);
+  font-family: var(--edex-font);
+  letter-spacing: 1px;
+}
+
+:global([data-slot="sidebar"][data-slot="sidebar"] > div > button:hover) {
+  background: rgba(70, 242, 130, 0.08);
+  border-color: var(--edex-green);
+}
+
+/* Terminal prompt prefix on the expanded button label. */
+:global([data-slot="sidebar"][data-slot="sidebar"] > div > button::before) {
+  content: '> ';
+  color: var(--edex-dim);
+}
+
+/* The workspace/session browsing region: mono green tree. */
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"]) {
+  font-family: var(--edex-font);
+  color: var(--edex-green);
+}
+
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]) {
+  color: var(--edex-green);
+  border-radius: 0;
+}
+
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]:hover) {
+  background: rgba(70, 242, 130, 0.07);
+}

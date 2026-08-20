@@ -1,0 +1,29 @@
+# ── dependencies ────────────────────────────────────────────────────────────
+node_modules/
+
+# ── build outputs ───────────────────────────────────────────────────────────
+# Each package emits its node half (lib/index.js) and browser bundle
+# (lib/client.js) via scripts/build.sh — regenerate, never commit.
+packages/*/lib/
+# ...except the generated Typert artifacts: the typert generator only runs
+# inside the harness workspace, so the host face + remote contribution MUST
+# stay versioned here.
+!packages/*/lib/typert.host.js
+!packages/*/lib/typert.host.d.ts
+!packages/*/lib/typert.remote-client.js
+!packages/*/lib/typert.remote-client.d.ts
+!packages/*/lib/typert.remote-client.js.map
+
+# TypeScript build metadata
+*.tsbuildinfo
+
+# ── local dev / probing artifacts ───────────────────────────────────────────
+probe-shot.png
+
+# ── editor / OS ─────────────────────────────────────────────────────────────
+.DS_Store
+.claude/
+
+# ── logs ────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*

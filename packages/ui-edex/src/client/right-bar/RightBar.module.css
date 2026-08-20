@@ -1,0 +1,98 @@
+/* Right column content: network status, world view globe, traffic charts. */
+
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--edex-border);
+}
+
+.title {
+  color: var(--edex-amber);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.specLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.specLine > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.key {
+  color: var(--edex-dim);
+}
+
+.globePane {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 160px;
+}
+
+/* The encom-globe canvas: internal render size fixed at construction, CSS
+   scaled to the pane width (aspect preserved by auto height). */
+.globeHost {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.globeHost :global(canvas) {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 320px;
+}
+
+/* Endpoint lat/lon readout pinned to the top right of the world-view pane. */
+.endpoints {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  font-size: 9px;
+}
+
+.endpoint {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.endpointName {
+  color: var(--edex-green);
+}
+
+.endpointCoord {
+  color: var(--edex-dim);
+}
+
+.trafficHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.traffic {
+  display: block;
+  width: 100%;
+  color: var(--edex-green);
+}

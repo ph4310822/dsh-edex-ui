@@ -1,7 +1,0 @@
-# The dsh-sidebar-clock bundle patch: adds a live clock to the sidebar brand
-# row. Requires the harness ui-sidebar to expose the `sidebar.brand` slot
-# (Option A). Purely additive — the clock shadows the default wordmark at a
-# lower priority; nothing in the default surface is disabled.
-- insert:
-    - id: ui-sidebar-clock
-      name: '@deepseek-ai/dsh-client-ui-sidebar-clock'

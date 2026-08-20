@@ -1,0 +1,84 @@
+/**
+ * Filesystem browser controller: lists directories through the
+ * `systemMetrics.listDirectory` Remote, tracks the current path, and keeps the
+ * storage indicator (from `overview`). The browser starts at the mount of the
+ * harness process cwd (the host's `storage.path`).
+ */
+import { EMPTY_FILES } from './types.ts'
+import type { FilesState, ObservableSource, SystemMetricsRemote } from './types.ts'
+
+/** Join a child name onto a directory path. */
+function joinPath(path: string, name: string): string {
+  if (path === '/' || path.endsWith('/')) return `${path}${name}`
+  return `${path}/${name}`
+}
+
+/** The parent of a directory path ('/' stays '/'). */
+function parentPath(path: string): string {
+  if (path === '/' || path === '') return '/'
+  const trimmed = path.replace(/\/+$/, '')
+  const index = trimmed.lastIndexOf('/')
+  if (index <= 0) return '/'
+  return trimmed.slice(0, index)
+}
+
+/** Mutable observable source backing the `useFiles` hook. */
+class FilesSource implements ObservableSource<FilesState> {
+  private value: FilesState = EMPTY_FILES
+  private readonly listeners = new Set<() => void>()
+
+  getSnapshot(): FilesState {
+    return this.value
+  }
+
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => { this.listeners.delete(listener) }
+  }
+
+  set(next: FilesState): void {
+    this.value = next
+    for (const listener of this.listeners) listener()
+  }
+}
+
+/** Lists directories and tracks the storage indicator. */
+export class FilesController {
+  private readonly source = new FilesSource()
+  private currentPath: string | undefined
+
+  constructor(private readonly remote: SystemMetricsRemote) {}
+
+  /** Bare observable files state source bound to the `useFiles` hook. */
+  get files(): ObservableSource<FilesState> {
+    return this.source
+  }
+
+  /** Fetch storage + list the current (or first) directory. */
+  async refresh(): Promise<void> {
+    const overview = await this.remote.overview()
+    if (overview.ok && this.currentPath === undefined) {
+      this.currentPath = overview.value.storage.path || '/'
+    }
+    await this.list(this.currentPath ?? '/')
+  }
+
+  /** List one directory and remember it as current. */
+  async list(path: string): Promise<void> {
+    this.currentPath = path
+    const overview = await this.remote.overview()
+    const listing = await this.remote.listDirectory(path)
+    this.source.set({
+      path,
+      entries: listing.ok ? listing.value.entries : [],
+      storage: overview.ok ? overview.value.storage : this.source.getSnapshot().storage,
+      error: listing.ok ? listing.value.error : listing.error.message,
+      phase: 'ready',
+    })
+  }
+
+  /** Navigate into a directory entry (or up for '..'). */
+  navigate(name: string): void {
+    void this.list(name === '..' ? parentPath(this.currentPath ?? '/') : joinPath(this.currentPath ?? '/', name))
+  }
+}
