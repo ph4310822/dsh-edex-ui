@@ -1,8 +1,0 @@
-# The dsh-theme-terminal bundle patch: adds the CRT terminal theme to the web
-# surface. Purely additive — nothing in the default surface is disabled: the
-# theme registers into the theme service (alias-token overrides over the dark
-# base palette) and an Appearance row is contributed next to the built-in one
-# (settings.general.item is a list slot; the built-in row sits at order 10).
-- insert:
-    - id: ui-theme-terminal
-      name: '@deepseek-ai/dsh-client-ui-theme-terminal'

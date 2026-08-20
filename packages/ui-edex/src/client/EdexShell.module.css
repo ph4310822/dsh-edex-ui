@@ -1,0 +1,103 @@
+/* eDEX shell frame: fixed full-viewport layer tiling left/right bars and
+   bottom cells around the original UI (which the reshape effect squeezes
+   into the center region). Self-contained CRT skin palette; the original UI
+   keeps its own theme. */
+
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  /* The overlay layer makes direct children interactive by default; the shell
+     is click-through everywhere except the panel cells below. */
+  pointer-events: none;
+
+  --edex-bg: #04120a;
+  --edex-panel: #071d10;
+  --edex-panel-2: #0a2818;
+  --edex-border: #155c31;
+  --edex-green: #46f282;
+  --edex-dim: #2eae5c;
+  --edex-amber: #e6c85c;
+  --edex-red: #e65a5a;
+  --edex-cyan: #5ad1e0;
+  --edex-font: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, Menlo, monospace;
+
+  font-family: var(--edex-font);
+  color: var(--edex-green);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.leftBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20vw;
+  height: 70vh;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--edex-panel);
+  border-right: 1px solid var(--edex-border);
+  overflow: hidden;
+}
+
+.rightBar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 25vw;
+  height: 70vh;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--edex-panel);
+  border-left: 1px solid var(--edex-border);
+  overflow: hidden;
+}
+
+.bottomLeft {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 35vw;
+  height: 30vh;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--edex-panel);
+  border-top: 1px solid var(--edex-border);
+  border-right: 1px solid var(--edex-border);
+  overflow: hidden;
+}
+
+/* Deliberately empty (per the shell spec); the cell only tiles the frame so
+   the original UI never shows through the bottom-right corner. */
+.bottomRight {
+  position: absolute;
+  left: 35vw;
+  right: 0;
+  bottom: 0;
+  height: 30vh;
+  pointer-events: auto;
+  background: var(--edex-bg);
+  border-top: 1px solid var(--edex-border);
+  border-left: 1px solid var(--edex-border);
+}
+
+/* Faint CRT scanline texture on the panel cells only. */
+.leftBar::after,
+.rightBar::after,
+.bottomLeft::after,
+.bottomRight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+}

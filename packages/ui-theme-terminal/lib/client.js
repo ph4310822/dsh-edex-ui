@@ -25,9 +25,9 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var TerminalThemeRow_module_css_default = {
-			"toggle": "T-vceq_toggle",
 			"label": "T-vceq_label",
-			"row": "T-vceq_row"
+			"row": "T-vceq_row",
+			"toggle": "T-vceq_toggle"
 		};
 		//#endregion
 		//#region src/client/TerminalThemeRow.tsx

@@ -1,1 +1,0 @@
-{"version":3,"file":"BootSequence.d.ts","sourceRoot":"","sources":["../../../../src/client/frame/BootSequence.tsx"],"names":[],"mappings":"AAAA;;;GAGG;AACH,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,kCAAkC,CAAA;AAInE,0BAA0B;AAC1B,MAAM,WAAW,iBAAiB;IAChC,CAAC,EAAE,WAAW,CAAC,UAAU,CAAC,CAAA;CAC3B;AAED,oCAAoC;AACpC,wBAAgB,YAAY,CAAC,EAAE,CAAC,EAAE,EAAE,iBAAiB,+BAcpD"}

@@ -1,0 +1,132 @@
+/* Bottom-left filesystem browser: path header, icon grid, storage bar. */
+
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pathRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--edex-border);
+  flex: none;
+}
+
+.pathKey {
+  color: var(--edex-dim);
+  flex: none;
+}
+
+.path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--edex-amber);
+}
+
+.upButton {
+  flex: none;
+  background: none;
+  border: 1px solid var(--edex-border);
+  color: var(--edex-green);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.upButton:hover {
+  background: var(--edex-panel-2);
+  border-color: var(--edex-green);
+}
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 4px;
+  padding: 8px 10px;
+  overflow-y: auto;
+  align-content: start;
+  scrollbar-width: thin;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--edex-green);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.cell:hover {
+  border-color: var(--edex-border);
+  background: var(--edex-panel-2);
+}
+
+.icon {
+  font-size: 16px;
+  color: var(--edex-cyan);
+}
+
+.name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error {
+  grid-column: 1 / -1;
+  color: var(--edex-red);
+  font-size: 10px;
+}
+
+.hint {
+  grid-column: 1 / -1;
+  color: var(--edex-dim);
+}
+
+.storageRow {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--edex-border);
+}
+
+.storageText {
+  color: var(--edex-dim);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.storageBar {
+  height: 8px;
+  background: var(--edex-border);
+  opacity: 0.6;
+}
+
+.storageFill {
+  height: 100%;
+  background: var(--edex-green);
+  box-shadow: 0 0 6px rgba(70, 242, 130, 0.5);
+}

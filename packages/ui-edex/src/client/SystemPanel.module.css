@@ -1,0 +1,180 @@
+/* Left column content: clock/specs, CPU telemetry, memory bars, processes. */
+
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--edex-border);
+}
+
+.clock {
+  font-size: 30px;
+  letter-spacing: 3px;
+  color: var(--edex-green);
+  text-align: center;
+  margin-bottom: 8px;
+  text-shadow: 0 0 8px rgba(70, 242, 130, 0.45);
+}
+
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.specLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.specLine > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.specKey {
+  color: var(--edex-dim);
+}
+
+.sectionTitle {
+  color: var(--edex-amber);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.cpuPairs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.cpuPair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cpuLabel {
+  width: 38px;
+  color: var(--edex-dim);
+  flex: none;
+}
+
+.cpuPct {
+  width: 42px;
+  text-align: right;
+  flex: none;
+}
+
+.spark {
+  flex: 1;
+  min-width: 0;
+  color: var(--edex-cyan);
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.metricKey {
+  color: var(--edex-dim);
+}
+
+.memBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.memLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--edex-dim);
+}
+
+.memPct {
+  color: var(--edex-green);
+}
+
+.blockBar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+}
+
+.blockOn,
+.blockOff {
+  flex: 1;
+}
+
+.blockOn {
+  background: var(--edex-green);
+  box-shadow: 0 0 6px rgba(70, 242, 130, 0.5);
+}
+
+.blockOff {
+  background: var(--edex-border);
+  opacity: 0.4;
+}
+
+.procTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.procTable th {
+  text-align: left;
+  color: var(--edex-dim);
+  font-weight: normal;
+  padding-bottom: 2px;
+}
+
+.procTable td {
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.procName {
+  max-width: 0;
+  width: 100%;
+}
+
+.num {
+  text-align: right;
+  width: 48px;
+}
+
+.foot {
+  margin-top: auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--edex-border);
+}
+
+.footText {
+  color: var(--edex-dim);
+}
