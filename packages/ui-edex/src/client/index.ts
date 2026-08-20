@@ -33,10 +33,10 @@ export const inject = ['slots', 'remote', 'theme']
  * the terminal skin is scheme-invariant.
  */
 export const TERMINAL_TOKEN_OVERRIDES: ThemeTokenOverrides = {
-  '--dsw-alias-bg-base': { light: '#071d10', dark: '#071d10' },
-  '--dsw-alias-bg-layer-1': { light: '#02120a', dark: '#02120a' },
-  '--dsw-alias-bg-layer-2': { light: '#031d10', dark: '#031d10' },
-  '--dsw-alias-bg-overlay': { light: '#071d10', dark: '#071d10' },
+  '--dsw-alias-bg-base': { light: '#000000', dark: '#000000' },
+  '--dsw-alias-bg-layer-1': { light: '#000000', dark: '#000000' },
+  '--dsw-alias-bg-layer-2': { light: '#000000', dark: '#000000' },
+  '--dsw-alias-bg-overlay': { light: '#000000', dark: '#000000' },
   '--dsw-alias-border-l1': { light: '#1d7a3f', dark: '#1d7a3f' },
   '--dsw-alias-border-l2': { light: '#2ea854', dark: '#2ea854' },
   '--dsw-alias-border-l3': { light: '#35e06a', dark: '#35e06a' },
@@ -46,8 +46,8 @@ export const TERMINAL_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   '--dsw-alias-state-error-primary': { light: '#e05a5a', dark: '#e05a5a' },
   '--dsw-alias-state-success-primary': { light: '#35e06a', dark: '#35e06a' },
   '--dsw-alias-state-warn-primary': { light: '#e0c05a', dark: '#e0c05a' },
-  '--dsw-specific-sidebar-fill': { light: '#001408', dark: '#001408' },
-  '--dsw-specific-input-major': { light: '#02120a', dark: '#02120a' },
+  '--dsw-specific-sidebar-fill': { light: '#000000', dark: '#000000' },
+  '--dsw-specific-input-major': { light: '#000000', dark: '#000000' },
 }
 
 /**

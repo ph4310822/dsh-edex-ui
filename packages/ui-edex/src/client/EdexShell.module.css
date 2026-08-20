@@ -11,9 +11,9 @@
      is click-through everywhere except the panel cells below. */
   pointer-events: none;
 
-  --edex-bg: #04120a;
-  --edex-panel: #071d10;
-  --edex-panel-2: #0a2818;
+  --edex-bg: #000000;
+  --edex-panel: #000000;
+  --edex-panel-2: #05120a;
   --edex-border: #155c31;
   --edex-green: #46f282;
   --edex-dim: #2eae5c;
@@ -98,7 +98,7 @@
     to bottom,
     transparent 0,
     transparent 2px,
-    rgba(0, 0, 0, 0.12) 3px
+    rgba(70, 242, 130, 0.05) 3px
   );
 }
 
@@ -115,6 +115,6 @@
     to bottom,
     transparent 0,
     transparent 2px,
-    rgba(0, 0, 0, 0.12) 3px
+    rgba(70, 242, 130, 0.05) 3px
   );
 }

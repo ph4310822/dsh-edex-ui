@@ -34,7 +34,14 @@ function Sparkline({ data, width = 64, height = 18 }: { data: readonly number[];
     })
     .join(' ')
   return (
-    <svg className={css.spark} width={width} height={height} aria-hidden="true">
+    <svg
+      className={css.spark}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       {points !== '' && <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1" />}
     </svg>
   )

@@ -76,7 +76,7 @@ function WorldView() {
 /** Dual up/down sparkline. */
 function TrafficChart({ up, down }: { up: readonly number[]; down: readonly number[] }) {
   const width = 160
-  const height = 36
+  const height = 72
   const toPoints = (series: readonly number[]): string => {
     const max = Math.max(1, ...series)
     return series
@@ -88,7 +88,14 @@ function TrafficChart({ up, down }: { up: readonly number[]; down: readonly numb
       .join(' ')
   }
   return (
-    <svg className={css.traffic} width={width} height={height} aria-hidden="true">
+    <svg
+      className={css.traffic}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <polyline points={toPoints(down)} fill="none" stroke="currentColor" strokeWidth="1" opacity="0.9" />
       <polyline points={toPoints(up)} fill="none" stroke="#e0c05a" strokeWidth="1" opacity="0.9" />
     </svg>

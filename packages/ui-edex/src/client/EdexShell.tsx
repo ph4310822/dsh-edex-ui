@@ -20,9 +20,11 @@ import { NetworkPanel } from './NetworkPanel.tsx'
 import { SystemPanel } from './SystemPanel.tsx'
 import css from './EdexShell.module.css'
 // Side-effect only: rethemes the stock composer capsule into a terminal input
-// (:global rules over the composer's stable data hooks). The module's class
-// map is unused; importing the file injects its <style data-plugin> tag.
+// and the sidebar (new-session button + workspace tree) into terminal style
+// (:global rules over their stable data hooks). The module class maps are
+// unused; importing the files injects their <style data-plugin> tags.
 import './TerminalComposer.module.css'
+import './TerminalSidebar.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
 export const CENTER_LEFT = '20vw'
