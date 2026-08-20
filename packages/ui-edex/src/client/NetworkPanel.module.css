@@ -40,11 +40,22 @@
   position: relative;
   display: flex;
   justify-content: center;
-  min-height: 128px;
+  min-height: 160px;
 }
 
-.globe {
-  color: var(--edex-cyan);
+/* The encom-globe canvas: internal render size fixed at construction, CSS
+   scaled to the pane width (aspect preserved by auto height). */
+.globeHost {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.globeHost :global(canvas) {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 320px;
 }
 
 /* Endpoint lat/lon readout pinned to the top right of the world-view pane. */

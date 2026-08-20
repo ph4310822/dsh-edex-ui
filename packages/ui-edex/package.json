@@ -45,6 +45,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "encom-globe": "^0.5.4",
+    "hexasphere.js": "^0.2.2",
     "react": "^18.2.0"
   },
   "peerDependencies": {

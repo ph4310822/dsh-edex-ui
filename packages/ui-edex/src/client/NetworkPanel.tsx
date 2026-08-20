@@ -1,9 +1,12 @@
 /**
- * Right column content: network interface status header, rotating wireframe
- * globe with endpoint coordinates, and a dual up/down traffic sparkline.
+ * Right column content: network interface status header, an encom-globe
+ * WebGL world view with endpoint markers and spline links, and a dual up/down
+ * traffic sparkline.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+import Globe from 'encom-globe'
+import { generateGlobeTiles } from './tiles.ts'
 import type { NetworkSnapshot } from './types.ts'
 import css from './NetworkPanel.module.css'
 
@@ -16,75 +19,58 @@ const ENDPOINTS: readonly { label: string; lat: number; lon: number }[] = [
   { label: 'AP-NORTHEAST', lat: 35.68, lon: 139.69 },
 ]
 
-/** Project lat/lon to the globe's 2D disc (rotation phase in degrees). */
-function project(lat: number, lon: number, phase: number, radius: number): { x: number; y: number; visible: boolean } {
-  const lonRad = ((lon + phase) * Math.PI) / 180
-  const latRad = (lat * Math.PI) / 180
-  const cosLon = Math.cos(lonRad)
-  return {
-    x: radius * Math.cos(latRad) * cosLon,
-    y: -radius * Math.sin(latRad),
-    visible: cosLon > 0,
-  }
-}
+/** The encom-globe rendering size (the canvas is CSS-scaled to the pane). */
+const GLOBE_WIDTH = 320
+const GLOBE_HEIGHT = 240
 
-/** Rotating wireframe globe (meridians + parallels + endpoint dots). */
-function Globe() {
-  const [phase, setPhase] = useState(0)
+/** WebGL world view: an encom-globe instance with the endpoint markers chained by splines. */
+function WorldView() {
+  const hostRef = useRef<HTMLDivElement | null>(null)
+
   useEffect(() => {
+    const host = hostRef.current
+    if (host === null) return
     let raf = 0
-    const tick = (): void => {
-      setPhase(value => value + 0.4)
-      raf = requestAnimationFrame(tick)
+    let globe: Globe | null = null
+    try {
+      globe = new Globe(GLOBE_WIDTH, GLOBE_HEIGHT, {
+        baseColor: '#46f282',
+        markerColor: '#46f282',
+        pinColor: '#5ad1e0',
+        satelliteColor: '#46f282',
+        font: 'Inconsolata',
+        introLinesDuration: 1200,
+        maxMarkers: ENDPOINTS.length + 2,
+        // The hex-particle surface: generated at runtime (the library's
+        // precomputed grid.js is ~960 KB; this keeps the bundle small).
+        tiles: generateGlobeTiles(),
+      })
+    } catch {
+      return // no WebGL: leave the pane empty rather than crashing the panel
     }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf) }
+    host.appendChild(globe.domElement)
+    const loop = (): void => {
+      if (globe !== null && globe.active) globe.tick()
+      raf = requestAnimationFrame(loop)
+    }
+    globe.init(() => {
+      let first = true
+      for (const endpoint of ENDPOINTS) {
+        globe?.addMarker(endpoint.lat, endpoint.lon, endpoint.label, !first)
+        first = false
+      }
+      raf = requestAnimationFrame(loop)
+    })
+    return () => {
+      cancelAnimationFrame(raf)
+      if (globe !== null) {
+        globe.destroy()
+        globe.domElement.remove()
+      }
+    }
   }, [])
-  const radius = 52
-  const cx = 70
-  const cy = 62
-  const meridians = [0, 30, 60, 90, 120, 150].map(offset => {
-    const pts: string[] = []
-    for (let lat = -90; lat <= 90; lat += 15) {
-      const p = project(lat, offset, phase, radius)
-      pts.push(`${(cx + p.x).toFixed(1)},${(cy + p.y).toFixed(1)}`)
-    }
-    return pts.join(' ')
-  })
-  const parallels = [-60, -30, 0, 30, 60].map(lat => {
-    const pts: string[] = []
-    for (let lon = 0; lon <= 360; lon += 15) {
-      const p = project(lat, lon, phase, radius)
-      pts.push(`${(cx + p.x).toFixed(1)},${(cy + p.y).toFixed(1)}`)
-    }
-    return pts.join(' ')
-  })
-  return (
-    <svg className={css.globe} viewBox="0 0 140 124" aria-hidden="true">
-      <circle cx={cx} cy={cy} r={radius} fill="none" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-      {meridians.map((points, index) => (
-        <polyline key={`m${index}`} points={points} fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.45" />
-      ))}
-      {parallels.map((points, index) => (
-        <polyline key={`p${index}`} points={points} fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.45" />
-      ))}
-      {ENDPOINTS.map(endpoint => {
-        const p = project(endpoint.lat, endpoint.lon, phase, radius)
-        return (
-          <circle
-            key={endpoint.label}
-            cx={cx + p.x}
-            cy={cy + p.y}
-            r={2}
-            fill={p.visible ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            strokeWidth="0.75"
-            opacity={p.visible ? 1 : 0.3}
-          />
-        )
-      })}
-    </svg>
-  )
+
+  return <div ref={hostRef} className={css.globeHost} data-testid="edex-world-view" />
 }
 
 /** Dual up/down sparkline. */
@@ -126,7 +112,7 @@ export function NetworkPanel({ useNetwork }: { useNetwork: SnapshotSelectorHook<
       <section className={css.section}>
         <div className={css.title}>WORLD VIEW</div>
         <div className={css.globePane}>
-          <Globe />
+          <WorldView />
           <div className={css.endpoints}>
             {ENDPOINTS.map(endpoint => (
               <div key={endpoint.label} className={css.endpoint}>

@@ -1,0 +1,58 @@
+/* Terminal-style composer overrides for the stock InputBar. The composer's
+   DOM carries stable data hooks (data-composer-card on the capsule,
+   data-input-scroll on the draft scrollport, data-input-backdrop/mirror on
+   the text layers, data-phase on the textarea), so these :global rules can
+   retheme it without touching ui-conversation.
+   Specificity note: the conversation surface loads lazily, so its stylesheet
+   can land AFTER this plugin's — every override doubles its attribute to win
+   the tie (e.g. [data-input-backdrop][data-input-backdrop] > .backdrop).
+   Text-layer contract: the backdrop carries the VISIBLE glyphs; the textarea
+   and the mirror must stay transparent (only the caret is the textarea's, the
+   mirror is the caret-reveal ruler). All three MUST share font metrics or the
+   caret drifts off the glyphs — the mono stack below is applied to all three
+   identically, with the chip cell font first so placeholder advances stay
+   exact. */
+
+/* The terminal palette must resolve inside the composer too: it lives outside
+   the shell frame, so define the vars on body (the plugin's style tag is
+   removed on unload). */
+:global(body) {
+  --edex-font: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, Menlo, monospace;
+  --edex-green: #46f282;
+}
+
+/* Flatten the capsule: drop the rounded surface so the input reads as a bare
+   terminal line against the conversation background. */
+:global([data-composer-card][data-composer-card]) {
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Keep the draft scrollport transparent as well. */
+:global([data-input-scroll][data-input-scroll]) {
+  background: transparent;
+}
+
+/* Shared mono metrics on all three text layers (chip cell first so the
+   U+FFFC placeholder advance stays exact). */
+:global(textarea[data-phase][data-phase]),
+:global([data-input-backdrop][data-input-backdrop]),
+:global([data-input-mirror][data-input-mirror]) {
+  font-family: 'DshChipCell', var(--edex-font);
+}
+
+/* Only the backdrop layer gets the visible terminal-green glyphs; the
+   textarea and mirror keep their transparent color. */
+:global([data-input-backdrop][data-input-backdrop]) {
+  color: var(--edex-green);
+}
+
+:global(textarea[data-phase][data-phase]) {
+  background: transparent;
+  /* The terminal caret: a thick block cursor where caret-shape is supported
+     (recent Chromium/Firefox), falling back to a solid green caret. */
+  caret-shape: block;
+  caret-color: var(--edex-green);
+}

@@ -19,6 +19,10 @@ import { FilesBrowser } from './FilesBrowser.tsx'
 import { NetworkPanel } from './NetworkPanel.tsx'
 import { SystemPanel } from './SystemPanel.tsx'
 import css from './EdexShell.module.css'
+// Side-effect only: rethemes the stock composer capsule into a terminal input
+// (:global rules over the composer's stable data hooks). The module's class
+// map is unused; importing the file injects its <style data-plugin> tag.
+import './TerminalComposer.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
 export const CENTER_LEFT = '20vw'
@@ -95,6 +99,9 @@ export function EdexShell({
         <FilesBrowser useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} />
       </section>
       <section className={css.bottomRight} aria-hidden="true" />
+      {/* Same faint CRT scanline texture as the panel cells, over the center
+          region (the original UI), so the whole canvas reads as one surface. */}
+      <section className={css.centerScanline} aria-hidden="true" />
     </div>
   )
 }

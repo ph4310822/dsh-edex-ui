@@ -101,3 +101,20 @@
     rgba(0, 0, 0, 0.12) 3px
   );
 }
+
+/* The same texture over the center region (the original UI), so the whole
+   canvas reads as one surface; click-through. */
+.centerScanline {
+  position: absolute;
+  left: 20vw;
+  right: 25vw;
+  top: 0;
+  bottom: 30vh;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+}
