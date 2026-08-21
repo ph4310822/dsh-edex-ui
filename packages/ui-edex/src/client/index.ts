@@ -28,7 +28,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import systemMetricsRemote from '@deepseek-ai/dsh-host-system-metrics/remote'
 import {
   DEFAULT_THEME_COLOR, EDEX_SETTINGS_NAMESPACE, THEME_COLOR_FIELD,
-  normalizeHex, paletteFor, tokenOverridesFor, type EdexSettings,
+  bodyVarsFor, normalizeHex, paletteFor, tokenOverridesFor, type EdexSettings,
 } from '../settings.ts'
 import { EdexShell, type EdexShellInjected } from './frame/EdexShell.tsx'
 import { FilesController } from './shared/files.ts'
@@ -69,23 +69,32 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
     subscribe: (listener) => scope.subscribe(() => listener()),
   }
 
-  // Recolor the original UI from the theme color: a token override layer on
-  // top of the active theme (the label tokens feed every icon glyph —
+  // Recolor the original UI from the theme color: the `--edex-*` variables on
+  // `body` (the composer/sidebar/scrollbar theme CSS resolves them there — the
+  // shell frame defines its own copy on `.shell`) plus a token override layer
+  // on top of the active theme (the label tokens feed every icon glyph —
   // `label-tertiary`/`label-caption` are the small icons beside tool names).
   // Re-applied on every accepted scope change; removed when this plugin
   // unloads. The user's theme preference is never touched.
   let disposeOverrides: (() => void) | undefined
   ctx.effect(() => {
-    const applyOverrides = (): void => {
+    const applyTheme = (): void => {
+      const palette = paletteFor(themeColorSource.getSnapshot())
+      for (const [name, value] of Object.entries(bodyVarsFor(palette))) {
+        document.body.style.setProperty(name, value)
+      }
       disposeOverrides?.()
-      disposeOverrides = ctx.theme.overrideTokens(
-        'dsh-client-ui-edex',
-        tokenOverridesFor(paletteFor(themeColorSource.getSnapshot())),
-      )
+      disposeOverrides = ctx.theme.overrideTokens('dsh-client-ui-edex', tokenOverridesFor(palette))
     }
-    applyOverrides()
-    const off = scope.subscribe(applyOverrides)
-    return () => { off(); disposeOverrides?.() }
+    applyTheme()
+    const off = scope.subscribe(applyTheme)
+    return () => {
+      off()
+      disposeOverrides?.()
+      for (const name of Object.keys(bodyVarsFor(paletteFor(DEFAULT_THEME_COLOR)))) {
+        document.body.style.removeProperty(name)
+      }
+    }
   }, 'ui-edex: theme-color token override')
 
   const poller = new EdexPoller(metrics)

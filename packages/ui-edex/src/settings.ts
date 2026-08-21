@@ -156,6 +156,22 @@ export function shellVarsFor(palette: EdexPalette): Record<string, string> {
   }
 }
 
+/**
+ * The full `--edex-*` variable set for the ORIGINAL UI (the composer, sidebar,
+ * and conversation scrollbar live outside the shell frame, so the theme CSS
+ * resolves these from `body` — set there by the browser half, with the static
+ * accents joining the dynamic palette). The shell frame defines its own copy
+ * on `.shell` and overrides it inline, so the two never fight.
+ */
+export function bodyVarsFor(palette: EdexPalette): Record<string, string> {
+  return {
+    ...shellVarsFor(palette),
+    '--edex-amber': FIXED_ACCENTS.amber,
+    '--edex-red': FIXED_ACCENTS.red,
+    '--edex-cyan': FIXED_ACCENTS.cyan,
+  }
+}
+
 /** One override-layer token value pair; both palettes carry the same value (the terminal skin is scheme-invariant). */
 function both(value: string): { light: string; dark: string } {
   return { light: value, dark: value }

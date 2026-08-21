@@ -15,11 +15,20 @@
    the input reads in the app's own font. */
 
 /* The terminal palette must resolve inside the composer too: it lives outside
-   the shell frame, so define the vars on body (the plugin's style tag is
-   removed on unload). */
+   the shell frame, so define the vars on body. The browser half re-sets the
+   color vars inline from the Theme Color setting (inline wins this
+   stylesheet); these values are the default palette, so the input reads
+   correctly even before the scope publishes. The plugin's style tag is
+   removed on unload. */
 :global(body) {
   --edex-font: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, Menlo, monospace;
   --edex-green: #46f282;
+  --edex-dim: #30b65f;
+  --edex-border: #155b2d;
+  --edex-panel-2: #07130b;
+  --edex-amber: #e6c85c;
+  --edex-red: #e65a5a;
+  --edex-cyan: #5ad1e0;
 }
 
 /* Flatten the capsule: drop the rounded surface so the input reads as a bare

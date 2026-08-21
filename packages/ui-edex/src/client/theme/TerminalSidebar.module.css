@@ -19,7 +19,7 @@
 }
 
 :global([data-slot="sidebar"][data-slot="sidebar"] > div > button:hover) {
-  background: rgba(70, 242, 130, 0.08);
+  background: color-mix(in srgb, var(--edex-green) 8%, transparent);
   border-color: var(--edex-green);
 }
 
@@ -37,5 +37,5 @@
 }
 
 :global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]:hover) {
-  background: rgba(70, 242, 130, 0.07);
+  background: color-mix(in srgb, var(--edex-green) 7%, transparent);
 }

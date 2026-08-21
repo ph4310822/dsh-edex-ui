@@ -1,6 +1,10 @@
-/* Green-on-black scrollbar for the conversation chat area. The
-   `[data-conversation-scroll]` element is the scroll container the app uses
-   for the main chat view. */
+/* Terminal scrollbar skin for the ORIGINAL UI's scrolling regions, in the
+   theme color. The conversation chat area (`[data-conversation-scroll]`) and
+   the sidebar workspace/session lists both render a square green thumb over a
+   transparent track; the `--edex-*` variables resolve from `body` (set there
+   by the browser half from the Theme Color setting). */
+
+/* The conversation chat area's scroll container. */
 :global([data-conversation-scroll][data-conversation-scroll]) {
   scrollbar-color: var(--edex-green) transparent;
   scrollbar-width: thin;
@@ -16,5 +20,28 @@
 }
 
 :global([data-conversation-scroll][data-conversation-scroll]::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+/* The sidebar workspace/session list(s): the scrolling `.list` elements are
+   hashed module class names ending in `_list` (list, flatList), so the
+   `[class*="_list"]` fragment targets them inside the region anchor. The
+   attribute doubling keeps these rules above the app's global scrollbar
+   skin, which would otherwise paint the neutral thumb token. */
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [class*="_list"]) {
+  scrollbar-color: var(--edex-green) transparent;
+  scrollbar-width: thin;
+}
+
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [class*="_list"]::-webkit-scrollbar) {
+  width: 8px;
+}
+
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [class*="_list"]::-webkit-scrollbar-thumb) {
+  background: var(--edex-green);
+  border-radius: 0;
+}
+
+:global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [class*="_list"]::-webkit-scrollbar-track) {
   background: transparent;
 }
