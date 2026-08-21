@@ -1,0 +1,20 @@
+/* Green-on-black scrollbar for the conversation chat area. The
+   `[data-conversation-scroll]` element is the scroll container the app uses
+   for the main chat view. */
+:global([data-conversation-scroll][data-conversation-scroll]) {
+  scrollbar-color: var(--edex-green) transparent;
+  scrollbar-width: thin;
+}
+
+:global([data-conversation-scroll][data-conversation-scroll]::-webkit-scrollbar) {
+  width: 8px;
+}
+
+:global([data-conversation-scroll][data-conversation-scroll]::-webkit-scrollbar-thumb) {
+  background: var(--edex-green);
+  border-radius: 0;
+}
+
+:global([data-conversation-scroll][data-conversation-scroll]::-webkit-scrollbar-track) {
+  background: transparent;
+}

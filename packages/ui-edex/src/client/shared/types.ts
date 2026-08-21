@@ -47,7 +47,7 @@ export interface PanelSnapshot {
   readonly powerState: string | null
   readonly hardware: HardwareInfo
   readonly tasks: number
-  /** Top processes by CPU, descending (capped at five). */
+  /** Top processes by CPU, descending (capped at ten). */
   readonly processes: readonly ProcessSample[]
 }
 

@@ -2,8 +2,12 @@
  * eDEX shell plugin, browser half: mounts the `systemMetrics` Host Remote
  * contribution, runs one shared overview poller (left system panel + right
  * network panel), and registers the shell frame into the root `shell.overlay`
- * list slot. Purely additive — the default surface stays composed, and the
- * frame only reshapes it visually (restored on unload).
+ * list slot. The user's Theme Color setting (Settings → General → Theme
+ * Color) drives one palette shared by the shell frame (`--edex-*` inline on
+ * the shell root) and a token override layer over the original UI
+ * (`--dsw-alias-*` on body) — icons included. Purely additive — the default
+ * surface stays composed, and the frame only reshapes it visually (restored
+ * on unload).
  */
 import type { Context } from '@deepseek-ai/cordis'
 // Type-only: pulls the api-remotes merge (ctx.remote) into this compilation.
@@ -12,51 +16,34 @@ import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 // Type-only: pulls the theme plugin's Context merge (ctx.theme) and the
 // override-layer vocabulary into this compilation.
-import type { ThemeTokenOverrides } from '@deepseek-ai/dsh-client-ui-theme/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 // Type-only: pulls the runtime's Context merge (ctx.workspaces) and the
 // workspaces snapshot vocabulary into this compilation.
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
+// Type-only: pulls the settings surface's Context merge (ctx.settingsScope).
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+// Type-only: pulls the locale plugin's Context merge (ctx.locale).
+import type {} from '@deepseek-ai/dsh-client-locale/client'
 // The generated Host Remote contribution; mounted in apply (inlined at build).
 import systemMetricsRemote from '@deepseek-ai/dsh-host-system-metrics/remote'
+import {
+  DEFAULT_THEME_COLOR, EDEX_SETTINGS_NAMESPACE, THEME_COLOR_FIELD,
+  normalizeHex, paletteFor, tokenOverridesFor, type EdexSettings,
+} from '../settings.ts'
 import { EdexShell, type EdexShellInjected } from './frame/EdexShell.tsx'
 import { FilesController } from './shared/files.ts'
 import { EdexPoller } from './shared/monitor.ts'
-import type { SystemMetricsRemote } from './shared/types.ts'
+import type { ObservableSource, SystemMetricsRemote } from './shared/types.ts'
+import { ThemeColorRow, type ThemeColorRowInjected } from './settings/ThemeColorRow.tsx'
+import { NS, zh, en } from './settings/locales.ts'
 
-/** Required services: the slot registry, the theme service, the sessions and workspaces runtimes, and the Remote carrier (namespace mounted in apply). */
-export const inject = ['slots', 'remote', 'theme', 'sessions', 'workspaces']
-
-/**
- * Green-on-black alias-token layer for the ORIGINAL web UI. Applied through
- * the theme service's override stack (never through the preference), so every
- * stock surface — chat, sidebar, settings, details — is recolored terminal
- * green while the user's theme choice stays untouched, and the layer is
- * removed when this plugin unloads. Both palette modes carry the same value:
- * the terminal skin is scheme-invariant.
- */
-export const TERMINAL_TOKEN_OVERRIDES: ThemeTokenOverrides = {
-  '--dsw-alias-bg-base': { light: '#000000', dark: '#000000' },
-  '--dsw-alias-bg-layer-1': { light: '#000000', dark: '#000000' },
-  '--dsw-alias-bg-layer-2': { light: '#000000', dark: '#000000' },
-  '--dsw-alias-bg-overlay': { light: '#000000', dark: '#000000' },
-  '--dsw-alias-border-l1': { light: '#1d7a3f', dark: '#1d7a3f' },
-  '--dsw-alias-border-l2': { light: '#2ea854', dark: '#2ea854' },
-  '--dsw-alias-border-l3': { light: '#35e06a', dark: '#35e06a' },
-  '--dsw-alias-brand-primary': { light: '#35e06a', dark: '#35e06a' },
-  '--dsw-alias-label-primary': { light: '#35e06a', dark: '#35e06a' },
-  '--dsw-alias-label-secondary': { light: '#2ea854', dark: '#2ea854' },
-  '--dsw-alias-state-error-primary': { light: '#e05a5a', dark: '#e05a5a' },
-  '--dsw-alias-state-success-primary': { light: '#35e06a', dark: '#35e06a' },
-  '--dsw-alias-state-warn-primary': { light: '#e0c05a', dark: '#e0c05a' },
-  '--dsw-specific-sidebar-fill': { light: '#000000', dark: '#000000' },
-  '--dsw-specific-input-major': { light: '#000000', dark: '#000000' },
-}
+/** Required services: the slot registry, the theme service, the sessions and workspaces runtimes, the locale and settings transport, and the Remote carrier (namespace mounted in apply). */
+export const inject = ['slots', 'remote', 'theme', 'sessions', 'workspaces', 'locale', 'connection', 'settingsScope']
 
 /**
  * Client plugin body: mount the systemMetrics contribution, start the shared
- * poller, and register the shell frame into the overlay layer once the layout
- * declares it.
+ * poller, apply the theme-color override layer, and register the shell frame
+ * and the Theme Color settings row.
  * @param ctx - client root context.
  * @returns disposer that unmounts the Remote namespace on unload.
  */
@@ -71,14 +58,35 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   // Non-traced read of the mounted namespace (post-mortem 0001 pattern).
   const metrics = ctx.get('remote.systemMetrics') as SystemMetricsRemote
 
-  // Recolor the original UI terminal green: a token override layer on top of
-  // the active theme, removed when this plugin unloads. The user's theme
-  // preference is never touched (the Appearance → Terminal row from
-  // ui-theme-terminal offers the persistent full-theme alternative).
-  ctx.effect(
-    () => ctx.theme.overrideTokens('dsh-client-ui-edex', TERMINAL_TOKEN_OVERRIDES),
-    'ui-edex: green-terminal token override',
-  )
+  // The durable Theme Color preference (Settings → General → Theme Color).
+  // Bound here so the override layer, the shell hook, and the settings row
+  // all observe the same accepted section.
+  const scope = ctx.settingsScope.bind<EdexSettings>({ namespace: EDEX_SETTINGS_NAMESPACE })
+
+  /** Current theme color, defaulting until the scope publishes its first section. */
+  const themeColorSource: ObservableSource<string> = {
+    getSnapshot: () => scope.getSnapshot().value?.themeColor ?? DEFAULT_THEME_COLOR,
+    subscribe: (listener) => scope.subscribe(() => listener()),
+  }
+
+  // Recolor the original UI from the theme color: a token override layer on
+  // top of the active theme (the label tokens feed every icon glyph —
+  // `label-tertiary`/`label-caption` are the small icons beside tool names).
+  // Re-applied on every accepted scope change; removed when this plugin
+  // unloads. The user's theme preference is never touched.
+  let disposeOverrides: (() => void) | undefined
+  ctx.effect(() => {
+    const applyOverrides = (): void => {
+      disposeOverrides?.()
+      disposeOverrides = ctx.theme.overrideTokens(
+        'dsh-client-ui-edex',
+        tokenOverridesFor(paletteFor(themeColorSource.getSnapshot())),
+      )
+    }
+    applyOverrides()
+    const off = scope.subscribe(applyOverrides)
+    return () => { off(); disposeOverrides?.() }
+  }, 'ui-edex: theme-color token override')
 
   const poller = new EdexPoller(metrics)
   ctx.effect(() => {
@@ -127,11 +135,33 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
           // Feeds the terminal path prompt at the composer input's left edge.
           workspaces: ctx.workspaces.list,
           sessions: ctx.sessions.list,
+          // Feeds the shell frame's --edex-* palette (theme color setting).
+          themeColor: themeColorSource,
         },
       }),
     }, EdexShell)),
     'ui-edex: shell overlay registration',
   )
+
+  // The Theme Color preference row joins the General section's item slot at
+  // order 12 (after Appearance 10 and the terminal theme 11). The built-in
+  // Appearance row's durable section is separate; this row owns the eDEX
+  // accent and writes only the ui-edex namespace.
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-edex: settings row dictionaries')
+
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'edex-theme-color',
+    order: 12,
+    locale: NS,
+    inject: (): ThemeColorRowInjected => ({
+      setColor: (color: string) => {
+        const normalized = normalizeHex(color)
+        if (normalized !== null) void scope.set(THEME_COLOR_FIELD, normalized)
+      },
+      hooks: { color: themeColorSource },
+    }),
+  }, ThemeColorRow))
 
   return dispose
 }

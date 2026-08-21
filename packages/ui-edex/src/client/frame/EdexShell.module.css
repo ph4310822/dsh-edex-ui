@@ -33,7 +33,7 @@
   left: 0;
   top: 0;
   width: 17vw;
-  height: 70vh;
+  height: 64vh;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -47,7 +47,7 @@
   right: 0;
   top: 0;
   width: 21.25vw;
-  height: 70vh;
+  height: 64vh;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -98,7 +98,7 @@
     to bottom,
     transparent 0,
     transparent 2px,
-    rgba(70, 242, 130, 0.05) 3px
+    color-mix(in srgb, var(--edex-green) 5%, transparent) 3px
   );
 }
 
@@ -115,7 +115,7 @@
     to bottom,
     transparent 0,
     transparent 2px,
-    rgba(70, 242, 130, 0.05) 3px
+    color-mix(in srgb, var(--edex-green) 5%, transparent) 3px
   );
 }
 

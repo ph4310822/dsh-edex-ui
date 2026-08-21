@@ -167,9 +167,11 @@ export function LeftBar({ usePanel }: { usePanel: SnapshotSelectorHook<PanelSnap
       </section>
 
       {/* ── top processes ── */}
-      <section className={css.section}>
+      <section className={`${css.section} ${css.processesSection}`}>
         <div className={css.sectionTitle}>PROCESSES</div>
-        <ProcessTable processes={panel.processes} />
+        <div className={css.procTableWrap}>
+          <ProcessTable processes={panel.processes} />
+        </div>
       </section>
 
       <footer className={css.foot}>

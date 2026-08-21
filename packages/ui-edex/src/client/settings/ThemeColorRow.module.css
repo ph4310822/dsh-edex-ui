@@ -1,0 +1,70 @@
+/* Theme Color settings row: label + preset swatch row + custom color input.
+   Styled against the settings surface's own alias tokens (the row lives in
+   the General section of the settings dialog, not inside the eDEX frame). */
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.label {
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* One preset swatch: a 22px rounded square of the accent it applies. */
+.swatch {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--swatch, transparent);
+  cursor: pointer;
+}
+
+.swatch:hover {
+  border-color: var(--dsw-alias-label-primary);
+}
+
+/* The active preset gets a check mark (currentColor over the swatch fill). */
+.swatch[data-active] {
+  border-color: var(--dsw-alias-label-primary);
+  box-shadow: 0 0 0 1px var(--dsw-alias-label-primary) inset;
+}
+
+/* Native color input, pill-cased like the surrounding controls. */
+.picker {
+  box-sizing: border-box;
+  width: 34px;
+  height: 22px;
+  padding: 1px 2px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.picker:hover {
+  border-color: var(--dsw-alias-label-primary);
+}
+
+.picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}

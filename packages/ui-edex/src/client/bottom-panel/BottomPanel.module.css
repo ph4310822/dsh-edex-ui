@@ -82,7 +82,7 @@
 /* The selected (previewed) file cell. */
 .cell[data-selected] {
   border-color: var(--edex-green);
-  background: rgba(70, 242, 130, 0.12);
+  background: color-mix(in srgb, var(--edex-green) 12%, transparent);
 }
 
 .icon {
@@ -134,5 +134,5 @@
 .storageFill {
   height: 100%;
   background: var(--edex-green);
-  box-shadow: 0 0 6px rgba(70, 242, 130, 0.5);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--edex-green) 50%, transparent);
 }

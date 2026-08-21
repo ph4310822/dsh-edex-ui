@@ -13,8 +13,10 @@
  * on dispose, so unloading this plugin restores the stock layout exactly.
  */
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionListState, WorkspaceListState } from '@deepseek-ai/dsh-client-runtime/client'
+import { paletteFor, shellVarsFor } from '../../settings.ts'
 import type { FilesState, NetworkSnapshot, ObservableSource, PanelSnapshot } from '../shared/types.ts'
 import { BottomPanel } from '../bottom-panel/BottomPanel.tsx'
 import { PreviewPane } from '../bottom-panel/PreviewPane.tsx'
@@ -27,6 +29,7 @@ import css from './EdexShell.module.css'
 // unused; importing the files injects their <style data-plugin> tags.
 import '../theme/TerminalComposer.module.css'
 import '../theme/TerminalSidebar.module.css'
+import '../theme/ConversationScrollbar.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
 export const CENTER_LEFT = '17vw'
@@ -73,6 +76,8 @@ export interface EdexShellInjected {
     workspaces: ObservableSource<WorkspaceListState>
     /** Session list snapshot — the prompt follows the ACTIVE conversation's workspace. */
     sessions: ObservableSource<SessionListState>
+    /** Current theme color (the user's Settings → General → Theme Color pick). */
+    themeColor: ObservableSource<string>
   }
 }
 
@@ -81,9 +86,16 @@ export type EdexShellProps = InjectFace<EdexShellInjected>
 
 /** The full eDEX frame: left/right bars + bottom cells around the original UI. */
 export function EdexShell({
-  usePanel, useNetwork, useFiles, useWorkspaces, useSessions, refreshFiles, navigateFiles, selectFile,
+  usePanel, useNetwork, useFiles, useWorkspaces, useSessions, useThemeColor,
+  refreshFiles, navigateFiles, selectFile,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
+
+  // The theme color drives the shell frame's --edex-* palette; the panel CSS
+  // modules consume those variables, and the same palette feeds the token
+  // override layer the browser half applies over the original UI.
+  const themeColor = useThemeColor(s => s)
+  const shellVars = shellVarsFor(paletteFor(themeColor))
 
   // The ACTIVE conversation's workspace folder — the terminal path prompt's
   // directory (same session→workspace mapping as the DIR panel).
@@ -160,12 +172,18 @@ export function EdexShell({
   }, [folder])
 
   return (
-    <div ref={shellRef} className={css.shell} data-edex-shell="" data-testid="edex-shell">
+    <div
+      ref={shellRef}
+      className={css.shell}
+      style={shellVars as CSSProperties}
+      data-edex-shell=""
+      data-testid="edex-shell"
+    >
       <aside className={css.leftBar}>
         <LeftBar usePanel={usePanel} />
       </aside>
       <aside className={css.rightBar}>
-        <RightBar useNetwork={useNetwork} />
+        <RightBar useNetwork={useNetwork} color={themeColor} />
       </aside>
       <section className={css.bottomLeft}>
         <BottomPanel useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} selectFile={selectFile} />

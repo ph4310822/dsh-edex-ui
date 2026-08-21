@@ -117,7 +117,7 @@ async function hardwareInfo(): Promise<HardwareInfo> {
 }
 
 /** Top processes by CPU usage, descending. */
-async function topProcesses(limit = 5): Promise<ProcessSample[]> {
+async function topProcesses(limit = 10): Promise<ProcessSample[]> {
   const args = process.platform === 'darwin'
     ? ['-axo', 'pid=,comm=,%cpu=,%mem=', '-r']
     : ['-axo', 'pid=,comm=,%cpu=,%mem=', '--sort=-%cpu']

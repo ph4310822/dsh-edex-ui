@@ -148,7 +148,7 @@ async function hardwareInfo() {
 	return hardwareCache;
 }
 /** Top processes by CPU usage, descending. */
-async function topProcesses(limit = 5) {
+async function topProcesses(limit = 10) {
 	const out = await run("ps", process.platform === "darwin" ? [
 		"-axo",
 		"pid=,comm=,%cpu=,%mem=",

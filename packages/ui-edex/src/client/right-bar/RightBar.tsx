@@ -3,9 +3,10 @@
  * world view with endpoint markers and spline links, and a dual up/down
  * traffic sparkline.
  */
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
-import Globe from 'encom-globe'
+// Vendored local encom-globe checkout (modified; see vendor/encom-globe).
+import Globe from '../../../vendor/encom-globe/src/Globe.js'
 import { generateGlobeTiles } from '../shared/tiles.ts'
 import type { NetworkSnapshot } from '../shared/types.ts'
 import css from './RightBar.module.css'
@@ -24,7 +25,7 @@ const GLOBE_WIDTH = 320
 const GLOBE_HEIGHT = 320
 
 /** WebGL world view: an encom-globe instance with the endpoint markers chained by splines. */
-function WorldView() {
+function WorldView({ color }: { color: string }) {
   const hostRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -32,12 +33,13 @@ function WorldView() {
     if (host === null) return
     let raf = 0
     let globe: Globe | null = null
+    let disposed = false
     try {
       globe = new Globe(GLOBE_WIDTH, GLOBE_HEIGHT, {
-        baseColor: '#46f282',
-        markerColor: '#46f282',
+        baseColor: color,
+        markerColor: color,
         pinColor: '#5ad1e0',
-        satelliteColor: '#46f282',
+        satelliteColor: color,
         font: 'Inconsolata',
         introLinesDuration: 1200,
         maxMarkers: ENDPOINTS.length + 2,
@@ -54,6 +56,7 @@ function WorldView() {
       raf = requestAnimationFrame(loop)
     }
     globe.init(() => {
+      if (disposed) return
       let first = true
       for (const endpoint of ENDPOINTS) {
         globe?.addMarker(endpoint.lat, endpoint.lon, endpoint.label, !first)
@@ -62,22 +65,41 @@ function WorldView() {
       raf = requestAnimationFrame(loop)
     })
     return () => {
+      disposed = true
       cancelAnimationFrame(raf)
       if (globe !== null) {
         globe.destroy()
         globe.domElement.remove()
       }
     }
-  }, [])
+  }, [color])
 
   return <div ref={hostRef} className={css.globeHost} data-testid="edex-world-view" />
 }
 
-/** Dual up/down sparkline with a light grid overlay; fixed 160px height. */
+/** Dual up/down sparkline with a light grid overlay. The height is dynamic:
+ *  the section flex-fills the bar's leftover space (screen − bottom panel −
+ *  network status − globe), and a ResizeObserver sizes the SVG viewBox to
+ *  match the box 1:1, so strokes render cleanly at any size. */
 function TrafficChart({ up, down }: { up: readonly number[]; down: readonly number[] }) {
-  const w = 316
-  const h = 160
-  const PAD = 2
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const [size, setSize] = useState({ w: 316, h: 160 })
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (host === null) return
+    const measure = (): void => {
+      const rect = host.getBoundingClientRect()
+      setSize({ w: Math.max(80, Math.floor(rect.width)), h: Math.max(48, Math.floor(rect.height)) })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(host)
+    return () => { ro.disconnect() }
+  }, [])
+
+  const { w, h } = size
+  const PAD = 2  // viewBox padding so lines at the extremes never clip (stroke extends ±0.75px)
   const toPoints = (series: readonly number[]): string => {
     const max = Math.max(1, ...series)
     return series
@@ -88,28 +110,32 @@ function TrafficChart({ up, down }: { up: readonly number[]; down: readonly numb
       })
       .join(' ')
   }
+  // Light grid: 4 horizontal bands × 8 vertical columns (1:1 viewBox = 1px strokes).
   const horizontalLines = [0.25, 0.5, 0.75].map(f => PAD + f * (h - 2 * PAD))
   const verticalLines = Array.from({ length: 7 }, (_, i) => (w / 8) * (i + 1))
   return (
-    <svg
-      width={w} height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      style={{ display: 'block', width: '100%', maxWidth: w, height: h, flex: 'none' }}
-    >
-      <g stroke="rgba(70, 242, 130, 0.18)" strokeWidth="1">
-        {horizontalLines.map(y => <line key={`h${y}`} x1="0" y1={y} x2={w} y2={y} />)}
-        {verticalLines.map(x => <line key={`v${x}`} x1={x} y1="0" x2={x} y2={h} />)}
-      </g>
-      <polyline points={toPoints(down)} fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.9" />
-      <polyline points={toPoints(up)} fill="none" stroke="#e0c05a" strokeWidth="1.5" opacity="0.9" />
-    </svg>
+    <div ref={hostRef} className={css.trafficChart}>
+      <svg
+        className={css.traffic}
+        width={w}
+        height={h}
+        viewBox={`0 0 ${w} ${h}`}
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <g stroke="currentColor" strokeOpacity="0.18" strokeWidth="1">
+          {horizontalLines.map(y => <line key={`h${y}`} x1="0" y1={y} x2={w} y2={y} />)}
+          {verticalLines.map(x => <line key={`v${x}`} x1={x} y1="0" x2={x} y2={h} />)}
+        </g>
+        <polyline points={toPoints(down)} fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.9" />
+        <polyline className={css.trafficUp} points={toPoints(up)} fill="none" strokeWidth="1.5" opacity="0.9" />
+      </svg>
+    </div>
   )
 }
 
 /** The right column content (rendered inside the eDEX shell's right bar). */
-export function RightBar({ useNetwork }: { useNetwork: SnapshotSelectorHook<NetworkSnapshot> }) {
+export function RightBar({ useNetwork, color }: { useNetwork: SnapshotSelectorHook<NetworkSnapshot>; color: string }) {
   const network = useNetwork(s => s)
 
   return (
@@ -125,7 +151,7 @@ export function RightBar({ useNetwork }: { useNetwork: SnapshotSelectorHook<Netw
       <section className={`${css.section} ${css.globeSection}`}>
         <div className={css.title}>WORLD VIEW</div>
         <div className={css.globePane}>
-          <WorldView />
+          <WorldView color={color} />
           <div className={css.endpoints}>
             {ENDPOINTS.map(endpoint => (
               <div key={endpoint.label} className={css.endpoint}>

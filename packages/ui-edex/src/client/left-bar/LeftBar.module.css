@@ -13,6 +13,17 @@
   border-bottom: 1px solid var(--edex-border);
 }
 
+/* The processes section flex-fills the bar's leftover height (screen − bottom
+   panel − specs − telemetry), and drops its bottom divider so it runs into
+   the loadavg footer. */
+.processesSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-bottom: none;
+}
+
 .clock {
   font-size: 30px;
   letter-spacing: 3px;
@@ -133,12 +144,25 @@
 
 .blockOn {
   background: var(--edex-green);
-  box-shadow: 0 0 6px rgba(70, 242, 130, 0.5);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--edex-green) 50%, transparent);
 }
 
 .blockOff {
   background: var(--edex-border);
   opacity: 0.4;
+}
+
+/* Scrollable process table fills the leftover height of its section; the
+   scrollbar is hidden (mouse wheel / trackpad still scroll). */
+.procTableWrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.procTableWrap::-webkit-scrollbar {
+  display: none;
 }
 
 .procTable {
