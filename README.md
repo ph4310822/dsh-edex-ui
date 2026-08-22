@@ -1,6 +1,6 @@
 # dsh-edex-ui
 
-**DeepSeek Harness eDEX-UI shell plugin** — a terminal-inspired overlay for the
+**DeepSeek Harness eDEX-UI shell plugin** — a terminal-inspired by https://github.com/GitSquared/edex-ui overlay for the
 DSH web GUI. Adds a classic eDEX-UI layout: system telemetry left bar, world-map
 right bar, filesystem browser, and a terminal-styled composer input — all wrapped
 around the original UI.
