@@ -1,0 +1,53 @@
+/* Terminal-style tool-row overrides: every tool-call item — Bash, Think,
+   Grep, Read, Web, Edit/Write, Todo, … — reads its DETAIL text (the inline
+   summary, path links, suffix) white on the black terminal surface, while the
+   leading icon and the tool title keep the theme's green.
+   Coverage: all three row shapes carry stable hooks —
+     · ToolRow rows (Read/Grep/Web/Todo/Edit/Write/AskQuestion/generic) and
+       Bash rows live inside the tool-call wrapper [data-chat-call-id]
+       (ToolCallTree), whose header row is [data-disclosure-row] (DisclosureRow)
+       or, for the bash registrant's local chrome, [data-sample];
+     · Think renders as a reasoning block with [data-variant="think"] wrapping
+       the same DisclosureRow header.
+   Mechanism: scope the label tokens WHITE on the header row only (the expanded
+   card body — terminal output, IN/OUT payload — is a sibling and keeps the
+   theme palette), then pin the icon and title back to --edex-dim. Attributes
+   are doubled so these rules win the tie against the app's own stylesheets
+   regardless of injection order. */
+
+/* 1 · Detail text white: scope the tokens on the header row. */
+:global([data-chat-call-id] [data-disclosure-row][data-disclosure-row]),
+:global([data-chat-call-id] [data-sample][data-sample]),
+:global([data-variant="think"][data-variant="think"] [data-disclosure-row][data-disclosure-row]) {
+  --dsw-alias-label-secondary: #ffffff;
+  --dsw-alias-label-tertiary: #ffffff;
+}
+
+/* 2 · Icon + title back to the theme green (dim). DisclosureRow's header row
+   always leads with the icon slot and puts the title second; the bash root
+   interleaves a visually-hidden status span while busy, so its title is the
+   2nd or 3rd child. */
+:global([data-chat-call-id] [data-disclosure-row] > :first-child),
+:global([data-variant="think"] [data-disclosure-row] > :first-child),
+:global([data-chat-call-id] [data-sample] > :first-child) {
+  color: var(--edex-dim);
+}
+
+:global([data-chat-call-id] [data-disclosure-row] > :nth-child(2)),
+:global([data-variant="think"] [data-disclosure-row] > :nth-child(2)) {
+  color: var(--edex-dim);
+}
+
+:global([data-chat-call-id] [data-sample] > :nth-child(2)),
+:global([data-chat-call-id] [data-sample] > :nth-child(3)) {
+  color: var(--edex-dim);
+}
+
+/* 3 · Chevron affordances inherit the icon's green (the collapsed icon is
+   wrapped, so only the direct-child chevron svgs need pinning; the error dot
+   is a span and keeps its own red). */
+:global([data-chat-call-id] [data-disclosure-row] > :first-child > svg),
+:global([data-variant="think"] [data-disclosure-row] > :first-child > svg),
+:global([data-chat-call-id] [data-sample] > :first-child > svg) {
+  color: var(--edex-dim);
+}

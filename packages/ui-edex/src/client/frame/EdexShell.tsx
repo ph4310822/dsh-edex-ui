@@ -30,6 +30,7 @@ import css from './EdexShell.module.css'
 import '../theme/TerminalComposer.module.css'
 import '../theme/TerminalSidebar.module.css'
 import '../theme/ConversationScrollbar.module.css'
+import '../theme/TerminalToolRows.module.css'
 
 /** The frame region the original UI is squeezed into (grid-column track of the viewport). */
 export const CENTER_LEFT = '17vw'
