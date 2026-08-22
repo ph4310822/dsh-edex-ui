@@ -1,0 +1,23 @@
+{
+  // Host aggregate for the Typert generator: declares which repo packages
+  // contribute host (./typert, ./remote) faces, plus a generator-time shim
+  // for the typert-protocol symbols (the generator demands that @Remote/
+  // TypertRemoteService declarations live inside a registered workspace
+  // package). The shim's src is never shipped; paths maps the protocol import
+  // here only during generation. The generator (run via
+  // scripts/regen-typert.mjs) walks the project references below to discover
+  // and analyze host packages; it never type-checks this file itself.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@deepseek-ai/dsh-typert-protocol": ["./packages/typert-protocol-shim/src/index.ts"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/host/system-metrics" },
+    { "path": "./packages/typert-protocol-shim" }
+  ]
+}

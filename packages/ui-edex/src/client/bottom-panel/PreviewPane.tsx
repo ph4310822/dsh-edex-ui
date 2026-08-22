@@ -1,12 +1,13 @@
 /**
  * Bottom-right preview pane: renders the file selected in the bottom-left
- * browser — text as a monospace terminal log, images and videos from their
- * data: payloads, and a message for everything else. Empty until a file is
- * selected.
+ * browser — text files open a vim-capable CodeMirror editor (see EditorPane),
+ * images and videos render from their data: payloads, and a message shows for
+ * everything else. Empty until a file is selected.
  */
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import type { FilesState } from '../shared/types.ts'
 import css from './PreviewPane.module.css'
+import { EditorPane } from './EditorPane.tsx'
 
 /** The file's display name from its path. */
 function fileName(path: string): string {
@@ -15,9 +16,22 @@ function fileName(path: string): string {
 }
 
 /** The bottom-right content (rendered inside the eDEX shell's bottom-right cell). */
-export function PreviewPane({ useFiles }: { useFiles: SnapshotSelectorHook<FilesState> }) {
+export function PreviewPane({
+  useFiles, markDirty, saveEditor, confirmDiscard, cancelDiscard,
+}: {
+  useFiles: SnapshotSelectorHook<FilesState>
+  /** Mark the open buffer dirty (called by the editor on doc changes). */
+  markDirty: () => void
+  /** Persist the editor buffer through the host `writeFile` Remote. */
+  saveEditor: (content: string) => void
+  /** Discard the dirty buffer and continue the paused navigation. */
+  confirmDiscard: () => void
+  /** Keep the dirty buffer and cancel the paused navigation. */
+  cancelDiscard: () => void
+}) {
   const files = useFiles(s => s)
   const preview = files.preview
+  const editor = files.editor
 
   return (
     <div className={css.pane} data-testid="edex-preview-pane">
@@ -33,7 +47,17 @@ export function PreviewPane({ useFiles }: { useFiles: SnapshotSelectorHook<Files
           <div className={css.error}>{preview.error}</div>
         )}
         {preview !== null && preview.error === null && preview.kind === 'text' && (
-          <pre className={css.text}>{preview.text ?? ''}</pre>
+          <EditorPane
+            key={preview.path}
+            path={preview.path}
+            content={preview.text ?? ''}
+            readOnly={preview.truncated}
+            editor={editor}
+            onMarkDirty={markDirty}
+            onSave={saveEditor}
+            onDiscard={confirmDiscard}
+            onCancelDiscard={cancelDiscard}
+          />
         )}
         {preview !== null && preview.error === null && preview.kind === 'image' && preview.dataUrl !== null && (
           <img className={css.media} src={preview.dataUrl} alt={fileName(preview.path)} />
@@ -44,7 +68,7 @@ export function PreviewPane({ useFiles }: { useFiles: SnapshotSelectorHook<Files
         {preview !== null && preview.error === null && preview.kind === 'unsupported' && (
           <div className={css.error}>CANNOT PREVIEW THIS FILE TYPE</div>
         )}
-        {preview !== null && preview.truncated && (
+        {preview !== null && preview.truncated && preview.kind !== 'text' && (
           <div className={css.truncated}>PREVIEW TRUNCATED ({preview.sizeBytes} BYTES)</div>
         )}
       </div>

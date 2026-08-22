@@ -7,7 +7,7 @@
  */
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
 import type {
-  DirectoryListing, FilePreview, HardwareInfo, NetworkInfo, ProcessSample, StorageInfo, SystemOverview,
+  DirectoryListing, FilePreview, HardwareInfo, NetworkInfo, ProcessSample, StorageInfo, SystemOverview, WriteResult,
 } from '@danielng23/dsh-host-system-metrics/types'
 
 export type { FilePreview }
@@ -23,6 +23,7 @@ export interface SystemMetricsRemote {
   overview: () => Promise<RemoteResult<SystemOverview>>
   listDirectory: (path: string) => Promise<RemoteResult<DirectoryListing>>
   readFile: (path: string) => Promise<RemoteResult<FilePreview>>
+  writeFile: (path: string, content: string) => Promise<RemoteResult<WriteResult>>
 }
 
 /** Left-bar system telemetry snapshot (host overview + client-derived deltas/history). */
@@ -73,6 +74,42 @@ export interface FilesState {
   readonly selected: string | null
   /** Preview payload of the selected file, or null while none is selected. */
   readonly preview: FilePreview | null
+  /** Bottom-right editor status (buffer content lives in the editor itself). */
+  readonly editor: EditorStatus
+}
+
+/**
+ * Bottom-right editor status surfaced to the shell. The buffer CONTENT lives
+ * in the CodeMirror view (never re-rendered through React); this slice only
+ * carries the save-related state the shell needs for the status bar and the
+ * navigation discard guard.
+ */
+export interface EditorStatus {
+  /** Open file path, or null when no editor is open. */
+  readonly path: string | null
+  /** Whether the buffer has unsaved changes. */
+  readonly dirty: boolean
+  /** Truncated (or otherwise read-only) files cannot be saved. */
+  readonly readOnly: boolean
+  /** True while a save request is in flight. */
+  readonly saving: boolean
+  /** Last save error (cleared on success); null while clean. */
+  readonly error: string | null
+  /** Last successful save (wall-clock ms + bytes written); null until one happens. */
+  readonly savedAt: { readonly at: number; readonly sizeBytes: number } | null
+  /** True while the shell asks to discard the dirty buffer before navigating. */
+  readonly pendingDiscard: boolean
+}
+
+/** Empty editor status (no editor open). */
+export const EMPTY_EDITOR: EditorStatus = {
+  path: null,
+  dirty: false,
+  readOnly: false,
+  saving: false,
+  error: null,
+  savedAt: null,
+  pendingDiscard: false,
 }
 
 /** Empty snapshot values rendered before the first successful overview. */
@@ -116,4 +153,5 @@ export const EMPTY_FILES: FilesState = {
   phase: 'loading',
   selected: null,
   preview: null,
+  editor: EMPTY_EDITOR,
 }

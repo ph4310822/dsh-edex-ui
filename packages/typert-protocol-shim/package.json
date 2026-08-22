@@ -1,0 +1,11 @@
+{
+  "name": "@deepseek-ai/dsh-typert-protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generator-time type shim for @deepseek-ai/dsh-typert-protocol: the Typert generator only recognizes @Remote/TypertRemoteService when their declarations live inside a registered workspace package, so tsconfig.host.json's paths map the protocol import onto this stub for generation runs. Runtime and the normal build resolve the real npm package via node_modules.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": []
+}

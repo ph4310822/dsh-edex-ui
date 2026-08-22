@@ -118,13 +118,22 @@ export interface FilePreview {
     readonly mime: string;
     /** Total file size in bytes (before truncation). */
     readonly sizeBytes: number;
-    /** True when the payload was capped (text 64 KiB / image 4 MiB / video 12 MiB). */
+    /** True when the payload was capped (text 4 MiB / image 4 MiB / video 12 MiB). */
     readonly truncated: boolean;
     /** UTF-8 text content (kind 'text'), else null. */
     readonly text: string | null;
     /** data: URL payload (kind 'image'/'video'), else null. */
     readonly dataUrl: string | null;
     /** Present when the file could not be read (access/permission/not-found). */
+    readonly error: string | null;
+}
+/** One file-write result for the bottom-right editor's save path. */
+export interface WriteResult {
+    /** The requested absolute path. */
+    readonly path: string;
+    /** Bytes written (the UTF-8 byte length of the persisted content). */
+    readonly sizeBytes: number;
+    /** Present when the file could not be written (access/permission/not-found). */
     readonly error: string | null;
 }
 //# sourceMappingURL=types.d.ts.map

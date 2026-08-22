@@ -1,0 +1,92 @@
+.editorPane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.cmHost {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The CodeMirror root fills its host cell. */
+.cmHost :global(.cm-editor) {
+  height: 100%;
+}
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-top: 1px solid var(--edex-border);
+  background: var(--edex-panel-2);
+  font-family: var(--edex-font, 'JetBrains Mono', 'Fira Code', Consolas, Menlo, monospace);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--edex-dim);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mode {
+  color: var(--edex-green);
+  font-weight: 700;
+}
+
+.sep {
+  color: var(--edex-border);
+}
+
+.pos {
+  color: var(--edex-dim);
+}
+
+.saving {
+  color: var(--edex-amber);
+}
+
+.saved {
+  color: var(--edex-green);
+}
+
+.error {
+  color: var(--edex-red);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ro {
+  color: var(--edex-amber);
+}
+
+.dirty {
+  color: var(--edex-amber);
+}
+
+.discardPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--edex-amber);
+}
+
+.discardBtn,
+.keepBtn {
+  background: transparent;
+  border: 1px solid var(--edex-border);
+  color: var(--edex-green);
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0 6px;
+  cursor: pointer;
+}
+
+.discardBtn:hover,
+.keepBtn:hover {
+  background: var(--edex-panel-2);
+  border-color: var(--edex-green);
+}

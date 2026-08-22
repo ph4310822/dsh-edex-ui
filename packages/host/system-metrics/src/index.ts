@@ -1,14 +1,14 @@
 /** System-monitor Host Remote serving `node:os` resource snapshots to the browser. */
 
 import { execFile as execFileCb } from 'node:child_process'
-import { open, readdir, stat as statAsync } from 'node:fs/promises'
+import { open, readdir, stat as statAsync, writeFile as writeFileAsync } from 'node:fs/promises'
 import { promisify } from 'node:util'
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { cpus, freemem, loadavg, networkInterfaces, totalmem, uptime } from 'node:os'
 import type {
   CoreTimes, DirectoryListing, FilePreview, HardwareInfo, NetworkInfo, ProcessSample,
-  StorageInfo, SystemMetricsSnapshot, SystemOverview,
+  StorageInfo, SystemMetricsSnapshot, SystemOverview, WriteResult,
 } from './types.ts'
 
 export type * from './types.ts'
@@ -213,6 +213,7 @@ async function storageInfo(): Promise<StorageInfo> {
  * Remote-only service exposing host resource snapshots to the browser. Every
  * snapshot is projected directly from `node:os` at call time; no cache exists
  * to synchronize.
+ * @typert service systemMetrics
  */
 export class SystemMetricsService extends TypertRemoteService {
   constructor(ctx: Context) {
@@ -304,10 +305,10 @@ export class SystemMetricsService extends TypertRemoteService {
   }
 
   /**
-   * Read one file for the bottom-right preview pane. Text payloads are
-   * capped at 64 KiB, images at 4 MiB, videos at 12 MiB; oversized files are
-   * truncated and flagged rather than refused. Kind is decided by extension
-   * with a UTF-8 sniff fallback for unknown extensions.
+   * Read one file for the bottom-right preview pane / editor. Text payloads
+   * are capped at 4 MiB, images at 4 MiB, videos at 12 MiB; oversized files
+   * are truncated and flagged rather than refused. Kind is decided by
+   * extension with a UTF-8 sniff fallback for unknown extensions.
    * @param path - absolute file path.
    * @returns the preview payload (or an error string when unreadable).
    */
@@ -366,6 +367,25 @@ export class SystemMetricsService extends TypertRemoteService {
       }
     }
   }
+
+  /**
+   * Write one text file from the bottom-right editor. Creates or replaces the
+   * file at `path` with the given UTF-8 content; the parent directory must
+   * exist. Trust surface matches `readFile`: the GUI already reads arbitrary
+   * paths the host process can reach, so writing carries the same parity.
+   * @param path - absolute file path.
+   * @param content - full text content to persist.
+   * @returns the write result (or an error string when unwritable).
+   */
+  @Remote('writeFile')
+  async writeFile(path: string, content: string): Promise<WriteResult> {
+    try {
+      await writeFileAsync(path, content, 'utf8')
+      return { path, sizeBytes: Buffer.byteLength(content, 'utf8'), error: null }
+    } catch (error) {
+      return { path, sizeBytes: 0, error: error instanceof Error ? error.message : String(error) }
+    }
+  }
 }
 
 /** Read at most `length` bytes from the file start. */
@@ -381,7 +401,7 @@ async function readFirst(path: string, length: number): Promise<Buffer> {
 }
 
 /** Preview payload caps (bytes). */
-const PREVIEW_TEXT_CAP = 64 * 1024
+const PREVIEW_TEXT_CAP = 4 * 1024 * 1024
 const PREVIEW_IMAGE_CAP = 4 * 1024 * 1024
 const PREVIEW_VIDEO_CAP = 12 * 1024 * 1024
 

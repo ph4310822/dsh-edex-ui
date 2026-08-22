@@ -68,6 +68,14 @@ export interface EdexShellInjected {
   navigateFiles: (name: string) => void
   /** Select a file in the current directory for the preview pane. */
   selectFile: (name: string) => void
+  /** Mark the open editor buffer dirty (called by the editor on doc changes). */
+  markDirty: () => void
+  /** Persist the editor buffer through the host `writeFile` Remote. */
+  saveEditor: (content: string) => void
+  /** Discard the dirty buffer and continue the paused navigation. */
+  confirmDiscard: () => void
+  /** Keep the dirty buffer and cancel the paused navigation. */
+  cancelDiscard: () => void
   hooks: {
     panel: ObservableSource<PanelSnapshot>
     network: ObservableSource<NetworkSnapshot>
@@ -87,7 +95,7 @@ export type EdexShellProps = InjectFace<EdexShellInjected>
 /** The full eDEX frame: left/right bars + bottom cells around the original UI. */
 export function EdexShell({
   usePanel, useNetwork, useFiles, useWorkspaces, useSessions, useThemeColor,
-  refreshFiles, navigateFiles, selectFile,
+  refreshFiles, navigateFiles, selectFile, markDirty, saveEditor, confirmDiscard, cancelDiscard,
 }: EdexShellProps) {
   const shellRef = useRef<HTMLDivElement | null>(null)
 
@@ -171,6 +179,68 @@ export function EdexShell({
     }
   }, [folder])
 
+  // Fullscreen toggle button in the sidebar workspace browser header, next to
+  // the three stock controls (search, view options, add workspace). The stock
+  // header is owned by ui-workspace, so the button is injected into its action
+  // cluster (the last direct <div> child of the section header — the search
+  // slot is the previous one, the label a <span>) via the same MutationObserver
+  // pattern as the path prompt. It drives the browser Fullscreen API on the
+  // whole document and swaps its icon/aria-label on `fullscreenchange`.
+  useEffect(() => {
+    const injected = new WeakSet<Element>()
+    let button: HTMLButtonElement | null = null
+    const svg = (exit: boolean): string => exit
+      // Compress: corners point inward (leave fullscreen).
+      ? '<path d="M6 6H2V2M10 6h4V2M10 10h4v4M6 10H2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+      // Expand: corners point outward (enter fullscreen).
+      : '<path d="M6 2H2v4M10 2h4v4M10 14h4v-4M6 14H2v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    const sync = (): void => {
+      if (button === null) return
+      const exit = document.fullscreenElement !== null
+      const icon = button.querySelector('svg')
+      if (icon !== null) icon.innerHTML = svg(exit)
+      button.setAttribute('aria-label', exit ? 'Exit fullscreen' : 'Fullscreen')
+    }
+    document.addEventListener('fullscreenchange', sync)
+
+    const inject = (): void => {
+      if (button !== null && button.isConnected) return
+      const host = document.querySelector('[data-slot="sidebar.workspaces"]')
+      const root = host?.firstElementChild
+      const header = root?.firstElementChild
+      if (header === undefined || header === null) return
+      // The stock action cluster (search, view options, add workspace) is the
+      // header's button container — match its CSS-module class (local name
+      // headerActions) rather than assuming a position, and fall back to the
+      // first direct DIV child.
+      const actions = header.querySelector('div[class*="headerActions"]')
+        ?? [...header.children].find(el => el.tagName === 'DIV')
+      if (actions === undefined || actions === null) return
+      if (injected.has(actions)) return
+      injected.add(actions)
+      button = document.createElement('button')
+      button.type = 'button'
+      button.className = css.fullscreenBtn ?? ''
+      button.setAttribute('data-edex-fullscreen', '')
+      button.setAttribute('aria-label', 'Fullscreen')
+      button.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">${svg(false)}</svg>`
+      button.addEventListener('click', () => {
+        if (document.fullscreenElement !== null) void document.exitFullscreen()
+        else void document.documentElement.requestFullscreen()
+      })
+      actions.appendChild(button)
+      sync()
+    }
+    inject()
+    const observer = new MutationObserver(inject)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('fullscreenchange', sync)
+      button?.remove()
+    }
+  }, [])
+
   return (
     <div
       ref={shellRef}
@@ -189,7 +259,13 @@ export function EdexShell({
         <BottomPanel useFiles={useFiles} refresh={refreshFiles} navigate={navigateFiles} selectFile={selectFile} />
       </section>
       <section className={css.bottomRight}>
-        <PreviewPane useFiles={useFiles} />
+        <PreviewPane
+          useFiles={useFiles}
+          markDirty={markDirty}
+          saveEditor={saveEditor}
+          confirmDiscard={confirmDiscard}
+          cancelDiscard={cancelDiscard}
+        />
       </section>
       {/* Same faint CRT scanline texture as the panel cells, over the center
           region (the original UI), so the whole canvas reads as one surface. */}

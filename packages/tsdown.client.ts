@@ -183,7 +183,16 @@ function clientConfig(id: string, entry: string): UserConfig {
     // must carry the TS/TSX mapping consumed by browser profiling tools.
     sourcemap: true,
     clean: false,
-    external: [...CLIENT_EXTERNALS],
+    deps: {
+      // Platform seed modules resolve from the loader's module table: never
+      // bundle them. Everything else — the plugin's own deps (CodeMirror,
+      // encom-globe, react peer copies) AND cross-package deps reached through
+      // a contribution file (e.g. zod imported by a generated /remote file,
+      // whose owning package declares it as a dependency) — must inline, or
+      // the loader's require table misses them at runtime.
+      neverBundle: [...CLIENT_EXTERNALS],
+      alwaysBundle: (id: string) => !CLIENT_EXTERNALS.includes(id),
+    },
     // Browser bundles inline node-idiom deps (zustand/immer read
     // process.env.NODE_ENV; zustand's esm build also probes
     // import.meta.env.MODE, which a CJS output cannot carry — rolldown flags
@@ -203,8 +212,8 @@ function clientConfig(id: string, entry: string): UserConfig {
     // loader module table must inline instead (wire/type layers, zod, clsx —
     // every non-shared dep). A require() the table cannot answer is a
     // guaranteed runtime throw, so the rule is the table list itself: no
-    // opinion for table entries (external above wins), bundle everything else.
-    noExternal: (id: string) => (CLIENT_EXTERNALS.includes(id) ? undefined : true),
+    // opinion for table entries (neverBundle above wins), bundle everything
+    // else via the deps.alwaysBundle override above.
     plugins: [{
       // Bundle purity gate (build-time mirror of the module-edge rules):
       // platform seed entries stay external, inline-safe wire layers inline,

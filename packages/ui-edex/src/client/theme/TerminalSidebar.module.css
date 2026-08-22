@@ -39,3 +39,24 @@
 :global([data-slot="sidebar.workspaces"][data-slot="sidebar.workspaces"] [role="treeitem"]:hover) {
   background: color-mix(in srgb, var(--edex-green) 7%, transparent);
 }
+
+/* The shell injects a fullscreen toggle into the header's action cluster
+   (the [class*="headerActions"] row holding view-options + add-workspace).
+   The stock cluster caps at max-width: 60px — exactly two 28px icons + gap —
+   so the third control clips past it; lift the cap when the injected button
+   is present (specificity beats the stock rule). */
+:global([data-slot="sidebar.workspaces"] [class*="headerActions"]) {
+  max-width: none;
+}
+
+/* The injected fullscreen control (EdexShell's DOM injector; footprint and
+   layout live in EdexShell.module.css): terminal-green like the New Session
+   button, with the same translucent hover wash. */
+:global([data-edex-fullscreen]) {
+  color: var(--edex-green);
+}
+
+:global([data-edex-fullscreen]:hover) {
+  background: color-mix(in srgb, var(--edex-green) 8%, transparent);
+  color: var(--edex-green);
+}

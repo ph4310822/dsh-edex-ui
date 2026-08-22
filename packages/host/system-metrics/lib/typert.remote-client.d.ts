@@ -3,7 +3,7 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { DirectoryListing, FilePreview, SystemMetricsSnapshot, SystemOverview } from '@danielng23/dsh-host-system-metrics/types'
+import type { DirectoryListing, FilePreview, SystemMetricsSnapshot, SystemOverview, WriteResult } from '@danielng23/dsh-host-system-metrics/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$73797374656d4d657472696373 {
@@ -11,12 +11,14 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     overview: () => Promise<RemoteResult<SystemOverview>>
     readFile: (path: string) => Promise<RemoteResult<FilePreview>>
     snapshot: () => Promise<RemoteResult<SystemMetricsSnapshot>>
+    writeFile: (path: string, content: string) => Promise<RemoteResult<WriteResult>>
   }
   interface TypertRemoteMap {
     'systemMetrics/listDirectory': (path: string) => Promise<RemoteResult<DirectoryListing>>
     'systemMetrics/overview': () => Promise<RemoteResult<SystemOverview>>
     'systemMetrics/readFile': (path: string) => Promise<RemoteResult<FilePreview>>
     'systemMetrics/snapshot': () => Promise<RemoteResult<SystemMetricsSnapshot>>
+    'systemMetrics/writeFile': (path: string, content: string) => Promise<RemoteResult<WriteResult>>
   }
   interface TypertRemoteNamespaceMap {
     'systemMetrics': TypertRemoteNamespace$73797374656d4d657472696373

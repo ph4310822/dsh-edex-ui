@@ -34,7 +34,7 @@ var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, 
     done = true;
 };
 import { execFile as execFileCb } from 'node:child_process';
-import { open, readdir, stat as statAsync } from 'node:fs/promises';
+import { open, readdir, stat as statAsync, writeFile as writeFileAsync } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
 import { cpus, freemem, loadavg, networkInterfaces, totalmem, uptime } from 'node:os';
@@ -239,6 +239,7 @@ async function storageInfo() {
  * Remote-only service exposing host resource snapshots to the browser. Every
  * snapshot is projected directly from `node:os` at call time; no cache exists
  * to synchronize.
+ * @typert service systemMetrics
  */
 let SystemMetricsService = (() => {
     let _classSuper = TypertRemoteService;
@@ -247,6 +248,7 @@ let SystemMetricsService = (() => {
     let _overview_decorators;
     let _listDirectory_decorators;
     let _readFile_decorators;
+    let _writeFile_decorators;
     return class SystemMetricsService extends _classSuper {
         static {
             const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
@@ -254,10 +256,12 @@ let SystemMetricsService = (() => {
             _overview_decorators = [Remote('overview')];
             _listDirectory_decorators = [Remote('listDirectory')];
             _readFile_decorators = [Remote('readFile')];
+            _writeFile_decorators = [Remote('writeFile')];
             __esDecorate(this, null, _snapshot_decorators, { kind: "method", name: "snapshot", static: false, private: false, access: { has: obj => "snapshot" in obj, get: obj => obj.snapshot }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _overview_decorators, { kind: "method", name: "overview", static: false, private: false, access: { has: obj => "overview" in obj, get: obj => obj.overview }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _listDirectory_decorators, { kind: "method", name: "listDirectory", static: false, private: false, access: { has: obj => "listDirectory" in obj, get: obj => obj.listDirectory }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _readFile_decorators, { kind: "method", name: "readFile", static: false, private: false, access: { has: obj => "readFile" in obj, get: obj => obj.readFile }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _writeFile_decorators, { kind: "method", name: "writeFile", static: false, private: false, access: { has: obj => "writeFile" in obj, get: obj => obj.writeFile }, metadata: _metadata }, null, _instanceExtraInitializers);
             if (_metadata) Object.defineProperty(this, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         }
         constructor(ctx) {
@@ -343,10 +347,10 @@ let SystemMetricsService = (() => {
             }
         }
         /**
-         * Read one file for the bottom-right preview pane. Text payloads are
-         * capped at 64 KiB, images at 4 MiB, videos at 12 MiB; oversized files are
-         * truncated and flagged rather than refused. Kind is decided by extension
-         * with a UTF-8 sniff fallback for unknown extensions.
+         * Read one file for the bottom-right preview pane / editor. Text payloads
+         * are capped at 4 MiB, images at 4 MiB, videos at 12 MiB; oversized files
+         * are truncated and flagged rather than refused. Kind is decided by
+         * extension with a UTF-8 sniff fallback for unknown extensions.
          * @param path - absolute file path.
          * @returns the preview payload (or an error string when unreadable).
          */
@@ -405,6 +409,24 @@ let SystemMetricsService = (() => {
                 };
             }
         }
+        /**
+         * Write one text file from the bottom-right editor. Creates or replaces the
+         * file at `path` with the given UTF-8 content; the parent directory must
+         * exist. Trust surface matches `readFile`: the GUI already reads arbitrary
+         * paths the host process can reach, so writing carries the same parity.
+         * @param path - absolute file path.
+         * @param content - full text content to persist.
+         * @returns the write result (or an error string when unwritable).
+         */
+        async writeFile(path, content) {
+            try {
+                await writeFileAsync(path, content, 'utf8');
+                return { path, sizeBytes: Buffer.byteLength(content, 'utf8'), error: null };
+            }
+            catch (error) {
+                return { path, sizeBytes: 0, error: error instanceof Error ? error.message : String(error) };
+            }
+        }
     };
 })();
 export { SystemMetricsService };
@@ -421,7 +443,7 @@ async function readFirst(path, length) {
     }
 }
 /** Preview payload caps (bytes). */
-const PREVIEW_TEXT_CAP = 64 * 1024;
+const PREVIEW_TEXT_CAP = 4 * 1024 * 1024;
 const PREVIEW_IMAGE_CAP = 4 * 1024 * 1024;
 const PREVIEW_VIDEO_CAP = 12 * 1024 * 1024;
 /** Image MIME by extension. */

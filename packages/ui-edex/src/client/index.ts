@@ -137,6 +137,10 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
         refreshFiles: () => { void files.refresh() },
         navigateFiles: (name: string) => { files.navigate(name) },
         selectFile: (name: string) => { void files.selectFile(name) },
+        markDirty: () => { files.markDirty() },
+        saveEditor: (content: string) => { void files.saveEditor(content) },
+        confirmDiscard: () => { files.confirmDiscard() },
+        cancelDiscard: () => { files.cancelDiscard() },
         hooks: {
           panel: poller.panel,
           network: poller.network,
