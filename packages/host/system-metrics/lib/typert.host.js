@@ -80,13 +80,13 @@ const _deepseek_ai_dsh_host_system_metrics_systemMetrics_snapshot_result$schema 
 })
 
 export const TYPERT = {
-  package: '@deepseek-ai/dsh-host-system-metrics',
+  package: '@danielng23/dsh-host-system-metrics',
   face: 'host',
   schemas: [
   ],
   invocations: [
     {
-      id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/listDirectory',
+      id: '@danielng23/dsh-host-system-metrics#systemMetrics/listDirectory',
       service: 'systemMetrics',
       namespace: 'systemMetrics',
       method: 'listDirectory',
@@ -98,20 +98,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/listDirectory:path',
+            typeSymbol: '@danielng23/dsh-host-system-metrics#systemMetrics/listDirectory:path',
             schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_listDirectory_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-host-system-metrics/types#DirectoryListing',
+        typeSymbol: '@danielng23/dsh-host-system-metrics/types#DirectoryListing',
         schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_listDirectory_result$schema,
       },
       sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":292,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/overview',
+      id: '@danielng23/dsh-host-system-metrics#systemMetrics/overview',
       service: 'systemMetrics',
       namespace: 'systemMetrics',
       method: 'overview',
@@ -120,13 +120,13 @@ export const TYPERT = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-host-system-metrics/types#SystemOverview',
+        typeSymbol: '@danielng23/dsh-host-system-metrics/types#SystemOverview',
         schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_overview_result$schema,
       },
       sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":245,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/readFile',
+      id: '@danielng23/dsh-host-system-metrics#systemMetrics/readFile',
       service: 'systemMetrics',
       namespace: 'systemMetrics',
       method: 'readFile',
@@ -138,20 +138,20 @@ export const TYPERT = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/readFile:path',
+            typeSymbol: '@danielng23/dsh-host-system-metrics#systemMetrics/readFile:path',
             schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-host-system-metrics/types#FilePreview',
+        typeSymbol: '@danielng23/dsh-host-system-metrics/types#FilePreview',
         schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_readFile_result$schema,
       },
       sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":314,"column":9},
     },
     {
-      id: '@deepseek-ai/dsh-host-system-metrics#systemMetrics/snapshot',
+      id: '@danielng23/dsh-host-system-metrics#systemMetrics/snapshot',
       service: 'systemMetrics',
       namespace: 'systemMetrics',
       method: 'snapshot',
@@ -160,7 +160,7 @@ export const TYPERT = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-host-system-metrics/types#SystemMetricsSnapshot',
+        typeSymbol: '@danielng23/dsh-host-system-metrics/types#SystemMetricsSnapshot',
         schema: _deepseek_ai_dsh_host_system_metrics_systemMetrics_snapshot_result$schema,
       },
       sourceLocation: {"file":"packages/host/system-metrics/src/index.ts","line":227,"column":3},

@@ -108,4 +108,23 @@ export interface DirectoryListing {
     /** Present when the path could not be listed (access/permission/not-found). */
     readonly error: string | null;
 }
+/** One file-preview result for the bottom-right preview pane. */
+export interface FilePreview {
+    /** The requested absolute path. */
+    readonly path: string;
+    /** How the browser should render the content. */
+    readonly kind: 'text' | 'image' | 'video' | 'unsupported';
+    /** Guessed MIME type ('' when unknown). */
+    readonly mime: string;
+    /** Total file size in bytes (before truncation). */
+    readonly sizeBytes: number;
+    /** True when the payload was capped (text 64 KiB / image 4 MiB / video 12 MiB). */
+    readonly truncated: boolean;
+    /** UTF-8 text content (kind 'text'), else null. */
+    readonly text: string | null;
+    /** data: URL payload (kind 'image'/'video'), else null. */
+    readonly dataUrl: string | null;
+    /** Present when the file could not be read (access/permission/not-found). */
+    readonly error: string | null;
+}
 //# sourceMappingURL=types.d.ts.map

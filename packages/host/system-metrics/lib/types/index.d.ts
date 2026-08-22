@@ -1,7 +1,7 @@
 /** System-monitor Host Remote serving `node:os` resource snapshots to the browser. */
 import type { Context } from '@deepseek-ai/cordis';
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
-import type { DirectoryListing, SystemMetricsSnapshot, SystemOverview } from './types.ts';
+import type { DirectoryListing, FilePreview, SystemMetricsSnapshot, SystemOverview } from './types.ts';
 export type * from './types.ts';
 /**
  * Remote-only service exposing host resource snapshots to the browser. Every
@@ -28,6 +28,15 @@ export declare class SystemMetricsService extends TypertRemoteService {
      * @returns the listing (or an error string when unreadable).
      */
     listDirectory(path: string): Promise<DirectoryListing>;
+    /**
+     * Read one file for the bottom-right preview pane. Text payloads are
+     * capped at 64 KiB, images at 4 MiB, videos at 12 MiB; oversized files are
+     * truncated and flagged rather than refused. Kind is decided by extension
+     * with a UTF-8 sniff fallback for unknown extensions.
+     * @param path - absolute file path.
+     * @returns the preview payload (or an error string when unreadable).
+     */
+    readFile(path: string): Promise<FilePreview>;
 }
 export default SystemMetricsService;
 //# sourceMappingURL=index.d.ts.map

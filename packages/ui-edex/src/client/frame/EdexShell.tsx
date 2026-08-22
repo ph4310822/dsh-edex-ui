@@ -149,7 +149,7 @@ export function EdexShell({
       if (grow === null) return
       const path = document.createElement('span')
       path.dataset.edexPath = ''
-      path.className = css.pathPrompt
+      path.className = css.pathPrompt ?? ''
       syncPath(path)
       scroll.insertBefore(path, grow)
     }

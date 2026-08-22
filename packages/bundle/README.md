@@ -1,4 +1,4 @@
-# dsh-edex-ui
+# @danielng23/dsh-edex-ui
 
 **DeepSeek Harness eDEX-UI shell plugin** — a terminal-inspired overlay for the
 DSH web GUI. Adds a classic eDEX-UI layout: system telemetry left bar, world-map
@@ -26,39 +26,20 @@ around the original UI.
 
 ## Installation
 
-The plugin is published to npm as `@danielng23/dsh-edex-ui`. From the harness
-checkout:
+From the harness checkout:
 
 ```sh
 pnpm dsh plugin --profile web add @danielng23/dsh-edex-ui
-pnpm dsh web   # serves the eDEX shell over the default GUI
 ```
-
-To run the local checkout instead of the npm release (for development), add
-the bundle with a `file:` path — its `file:` dependency specs link the local
-sub-packages:
-
-```sh
-pnpm dsh plugin --profile web add file:/path/to/dsh-edex-ui/packages/bundle
-```
-
-See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for the three-instance port
-layout (3080 baseline / 3081 npm / 3083 local), the build, and the iteration
-workflow.
-
-## Development
-
-See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for the full build, install,
-and iteration workflow.
 
 ## Packages
 
 | Package | Host/Client | Description |
 |---|---|---|
-| `packages/bundle` | — | Installable bundle (`cordis.patch.yml`) |
-| `packages/ui-edex` | client | The eDEX shell frame and all panels |
-| `packages/ui-theme-terminal` | client | Appearance → Terminal theme row |
-| `packages/host/system-metrics` | host | System telemetry RPC endpoints |
+| `@danielng23/dsh-edex-ui` | — | Installable bundle (`cordis.patch.yml`) |
+| `@danielng23/dsh-client-ui-edex` | client | The eDEX shell frame and all panels |
+| `@danielng23/dsh-client-ui-theme-terminal` | client | Appearance → Terminal theme row |
+| `@danielng23/dsh-host-system-metrics` | host | System telemetry RPC endpoints |
 
 ## License
 

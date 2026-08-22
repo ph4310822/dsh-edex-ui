@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-host-system-metrics
+# @danielng23/dsh-host-system-metrics
 
 English | [中文](README.zh.md)
 
@@ -10,7 +10,7 @@ Compose the service row beside the Web stack:
 
 ```yaml
 - id: system-metrics
-  name: '@deepseek-ai/dsh-host-system-metrics'
+  name: '@danielng23/dsh-host-system-metrics'
 ```
 
 The service key is `ctx.systemMetrics`; the wire namespace is `systemMetrics` with one method `snapshot`. The generated client projection ships as `./remote` and is mounted in the standard `@deepseek-ai/dsh-api-remotes` Client assembly alongside the other Host Remote contributions.

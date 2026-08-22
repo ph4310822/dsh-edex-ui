@@ -1,6 +1,6 @@
 //#region lib/types/invariant.js
-/** Package-owned invariant companion. @module @deepseek-ai/dsh-host-system-metrics/invariant */
-const PACKAGE_NAME = "@deepseek-ai/dsh-host-system-metrics";
+/** Package-owned invariant companion. @module @danielng23/dsh-host-system-metrics/invariant */
+const PACKAGE_NAME = "@danielng23/dsh-host-system-metrics";
 /** Cordis companion plugin name. */
 const name = "host-system-metrics-invariant";
 /** Service required before the companion can reserve package ownership. */

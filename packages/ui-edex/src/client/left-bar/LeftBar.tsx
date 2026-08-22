@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'react'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ProcessSample } from '@deepseek-ai/dsh-host-system-metrics/types'
+import type { ProcessSample } from '@danielng23/dsh-host-system-metrics/types'
 import type { PanelSnapshot } from '../shared/types.ts'
 import css from './LeftBar.module.css'
 
@@ -65,7 +65,7 @@ function BlockBar({ used, total }: { used: number; total: number }) {
 function CpuPairs({ busy, history }: { busy: readonly number[]; history: readonly (readonly number[])[] }) {
   const pairs: { label: string; pct: number; series: readonly number[] }[] = []
   for (let index = 0; index < busy.length; index += 2) {
-    const a = busy[index]
+    const a = busy[index] ?? 0
     const b = busy[index + 1]
     pairs.push({
       label: b === undefined ? `#${index + 1}` : `#${index + 1}-${index + 2}`,

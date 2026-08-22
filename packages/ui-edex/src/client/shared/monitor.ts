@@ -5,7 +5,7 @@
  * up/down network throughput deltas + history. A single overview call per
  * tick keeps the host and the wire quiet.
  */
-import type { CoreTimes } from '@deepseek-ai/dsh-host-system-metrics/types'
+import type { CoreTimes } from '@danielng23/dsh-host-system-metrics/types'
 import { EMPTY_NETWORK, EMPTY_PANEL } from './types.ts'
 import type {
   NetworkSnapshot, ObservableSource, PanelSnapshot, SystemMetricsRemote,

@@ -9,6 +9,12 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ThemeTokens } from '@deepseek-ai/dsh-client-ui-theme/client'
 // Type-only: pulls the theme plugin's Context merge (ctx.theme) into this compilation.
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+// Type-only: pulls the locale plugin's Context merge (ctx.locale) into this
+// compilation.
+import type {} from '@deepseek-ai/dsh-client-locale/client'
+// Type-only: pulls the settings surface's slot contract (the
+// settings.general.item SlotMap merge) into this compilation.
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { NS, zh, en } from './locales.ts'
 import { TerminalThemeRow, type TerminalThemeRowInjected } from './TerminalThemeRow.tsx'
 

@@ -1,14 +1,14 @@
 {
-  "name": "@deepseek-ai/dsh-edex-ui",
+  "name": "@danielng23/dsh-edex-ui",
   "description": "eDEX-UI style shell over the web surface: system telemetry left bar, network/world-view right bar, filesystem browser bottom-left, original UI centered",
-  "version": "0.1.0-rc.7",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/bundle/edex-ui"
+    "url": "git+https://github.com/ph4310822/dsh-edex-ui.git",
+    "directory": "packages/bundle"
   },
   "type": "module",
   "dsh": {
@@ -20,9 +20,9 @@
     "cordis.patch.yml"
   ],
   "dependencies": {
-    "@deepseek-ai/dsh-client-ui-edex": "file:../ui-edex",
-    "@deepseek-ai/dsh-client-ui-theme-terminal": "file:../ui-theme-terminal",
-    "@deepseek-ai/dsh-host-system-metrics": "file:../host/system-metrics"
+    "@danielng23/dsh-client-ui-edex": "file:../ui-edex",
+    "@danielng23/dsh-client-ui-theme-terminal": "file:../ui-theme-terminal",
+    "@danielng23/dsh-host-system-metrics": "file:../host/system-metrics"
   },
   "license": "MIT"
 }

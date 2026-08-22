@@ -16,19 +16,21 @@ if [ ! -d "$HARNESS/packages" ]; then
   exit 1
 fi
 
-mkdir -p "$ROOT/node_modules/@deepseek-ai"
+mkdir -p "$ROOT/node_modules/@deepseek-ai" "$ROOT/node_modules/@danielng23"
 
 linked=0
 
-# Link the plugin's OWN @deepseek-ai packages first (they ship the generated
-# Typert artifacts this checkout must build against — the harness copies
-# cannot replace them). A name found under this repo's packages/ wins.
+# Link the plugin's OWN @deepseek-ai / @danielng23 packages first (they ship
+# the generated Typert artifacts this checkout must build against — the
+# harness copies cannot replace them). A name found under this repo's
+# packages/ wins.
 for manifest in "$ROOT"/packages/*/*/package.json; do
   [ -f "$manifest" ] || continue
   name="$(node -e "process.stdout.write(require('$manifest').name ?? '')" 2>/dev/null || true)"
   case "$name" in
-    @deepseek-ai/*)
-      link="$ROOT/node_modules/@deepseek-ai/${name#@deepseek-ai/}"
+    @deepseek-ai/*|@danielng23/*)
+      scope="${name%%/*}"
+      link="$ROOT/node_modules/$scope/${name#*/}"
       if [ ! -e "$link" ]; then
         ln -s "$(dirname "$manifest")" "$link"
         linked=$((linked + 1))

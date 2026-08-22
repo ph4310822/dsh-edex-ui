@@ -11,10 +11,10 @@
 # Terminal) that recolors the whole app green-on-black.
 - insert:
     - id: host-system-metrics
-      name: '@deepseek-ai/dsh-host-system-metrics'
+      name: '@danielng23/dsh-host-system-metrics'
 
     - id: ui-edex
-      name: '@deepseek-ai/dsh-client-ui-edex'
+      name: '@danielng23/dsh-client-ui-edex'
 
     - id: ui-theme-terminal
-      name: '@deepseek-ai/dsh-client-ui-theme-terminal'
+      name: '@danielng23/dsh-client-ui-theme-terminal'

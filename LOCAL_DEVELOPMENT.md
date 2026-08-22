@@ -392,9 +392,10 @@ test a rebuild without interrupting it, the workflow is:
    section 6):
    ```sh
    cd ~/.dsh/profiles/web-edex
-   rm -rf node_modules/@deepseek-ai/dsh-edex-ui \
-          node_modules/@deepseek-ai/dsh-client-ui-edex \
-          node_modules/@deepseek-ai/dsh-client-ui-theme-terminal
+   rm -rf node_modules/@danielng23/dsh-edex-ui \
+          node_modules/@danielng23/dsh-client-ui-edex \
+          node_modules/@danielng23/dsh-client-ui-theme-terminal \
+          node_modules/@danielng23/dsh-host-system-metrics
    pnpm install
    ```
 
@@ -418,7 +419,7 @@ test a rebuild without interrupting it, the workflow is:
    change):
    ```sh
    cd /path/to/deepseek-harness
-   pnpm dsh plugin --profile web remove @deepseek-ai/dsh-edex-ui
+   pnpm dsh plugin --profile web remove @danielng23/dsh-edex-ui
    ```
 
 7. **Restart the main 3080 server** (do this after the scratch server is
@@ -444,7 +445,57 @@ test a rebuild without interrupting it, the workflow is:
 
 ---
 
-## 9. Publish + clean-room check
+## 9. Ports configuration (three-instance layout)
+
+The current dev setup runs three web instances, one per plugin source, so a
+baseline GUI, the npm-published plugin, and the local checkout are all live at
+once:
+
+| Port | Profile | Plugin | Use |
+|---|---|---|---|
+| 3080 | `web` (instance started before the add) | **none** | baseline GUI without the plugin |
+| 3081 | `web` | **npm production** — `@danielng23/dsh-edex-ui@0.1.0` | verify the published package |
+| 3083 | `web-edex` | **local** — `file:/path/to/dsh-edex-ui/packages/bundle` | iterate on the checkout |
+
+- **3080** is the plain GUI. A running instance keeps its in-memory config
+  until it is restarted, so an instance started before `plugin add` stays
+  plugin-free even though the profile now lists the bundle; restarting it
+  applies whatever the profile currently composes.
+- **3081** is the production install from npm:
+  ```sh
+  cd /path/to/deepseek-harness
+  pnpm dsh plugin --profile web add @danielng23/dsh-edex-ui
+  pnpm dsh web --port 3081
+  ```
+- **3083** is the local install from this checkout. The bundle's `file:`
+  dependency specs (`packages/bundle/package.json`) link the local
+  sub-packages, so a rebuild of `lib/` is what the scratch instance serves
+  after `pnpm install`:
+  ```sh
+  cd /path/to/deepseek-harness
+  pnpm dsh plugin --profile web-edex add file:/path/to/dsh-edex-ui/packages/bundle
+  pnpm dsh web --port 3083
+  ```
+
+Verify each instance serves its plugin bundles:
+
+```sh
+# 200 on 3081 and 3083, 404 on 3080 (no plugin)
+curl -s -o /dev/null -w '%{http_code}\n' \
+  http://127.0.0.1:3081/plugins/@danielng23/dsh-client-ui-edex/client.js
+```
+
+Smoke-test the host RPC (both the published and local installs answer):
+
+```sh
+curl -s -X POST -H 'Content-Type: application/json' \
+  -d '{"type":"client-request","rpcId":"probe","method":"systemMetrics/snapshot","payload":{"args":{}}}' \
+  http://127.0.0.1:3081/api/systemMetrics/snapshot   # {"result":{"ok":true,...}}
+```
+
+---
+
+## 10. Publish + clean-room check
 
 - `lib/` is the npm payload: **build immediately before publishing** (a stale
   client bundle id or typert `package` field only fails at boot, not at
